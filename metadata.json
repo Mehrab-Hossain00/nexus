@@ -1,0 +1,7 @@
+{
+  "name": "Nexus Study Pro",
+  "description": "A local-first, AI-powered productivity suite for high-performance students featuring intelligent scheduling, focus tools, and analytics.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Container -->
+  <rect width="512" height="512" rx="120" fill="#000000"/>
+  
+  <!-- Subtle White Border -->
+  <rect x="4" y="4" width="504" height="504" rx="116" stroke="white" stroke-opacity="0.1" stroke-width="8"/>
+  
+  <!-- Indigo Glow Accent (Top Right) -->
+  <g filter="url(#glow)">
+    <circle cx="400" cy="112" r="60" fill="#6366F1" fill-opacity="0.8"/>
+  </g>
+  
+  <!-- Lucide Sparkles Icon (Scaled to fit 512x512) -->
+  <g transform="translate(86, 86) scale(14)">
+    <!-- Main Star -->
+    <path d="M12 3L10.088 8.813C9.697 10.003 8.76 10.94 7.57 11.331L1.757 13.243L7.57 15.155C8.76 15.546 9.697 16.483 10.088 17.673L12 23.486L13.912 17.673C14.303 16.483 15.24 15.546 16.43 15.155L22.243 13.243L16.43 11.331C15.24 10.94 14.303 10.003 13.912 8.813L12 3Z" fill="white"/>
+    <!-- Small Star -->
+    <path d="M5 3L4.5 4.5L3 5L4.5 5.5L5 7L5.5 5.5L7 5L5.5 4.5L5 3Z" transform="translate(10, -2) scale(1.2)" fill="white" fill-opacity="0.9"/>
+  </g>
+
+  <!-- Filters -->
+  <defs>
+    <filter id="glow" x="240" y="-48" width="320" height="320" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="50" result="effect1_foregroundBlur"/>
+    </filter>
+  </defs>
+</svg>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus Study Pro</title>
+    <script>
+      // Non-destructive shim for process.env
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              nexus: {
+                black: '#000000',
+                card: '#09090b',
+                border: '#27272a',
+                indigo: '#6366f1'
+              }
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.4s ease-out forwards',
+              'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            keyframes: {
+              fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+              slideUp: {
+                '0%': { opacity: '0', transform: 'translateY(12px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #000000;
+        color: #f4f4f5;
+        font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      
+      ::selection { background: rgba(99, 102, 241, 0.2); color: #fff; }
+
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+      .prose pre { background: #09090b !important; border: 1px solid #27272a; }
+      .prose code { color: #818cf8 !important; font-family: 'JetBrains Mono', monospace; }
+      
+      .katex-display { margin: 1.5em 0; padding: 1em; background: rgba(255,255,255,0.03); border-radius: 12px; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/": "https://esm.sh/react@18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+    "lucide-react": "https://esm.sh/lucide-react@0.263.1?external=react",
+    "react-markdown": "https://esm.sh/react-markdown@9.0.1?external=react,react-dom",
+    "remark-gfm": "https://esm.sh/remark-gfm@4.0.0",
+    "remark-math": "https://esm.sh/remark-math@6.0.0",
+    "rehype-katex": "https://esm.sh/rehype-katex@7.0.0",
+    "react-syntax-highlighter": "https://esm.sh/react-syntax-highlighter@15.5.0?external=react",
+    "react-syntax-highlighter/dist/esm/styles/prism": "https://esm.sh/react-syntax-highlighter@15.5.0/dist/esm/styles/prism",
+    "recharts": "https://esm.sh/recharts@2.12.0?external=react,react-dom",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "firebase/app": "https://esm.sh/firebase@^12.7.0/app",
+    "firebase/firestore": "https://esm.sh/firebase@^12.7.0/firestore",
+    "react-syntax-highlighter/": "https://esm.sh/react-syntax-highlighter@^16.1.0/",
+    "firebase/": "https://esm.sh/firebase@^12.7.0/",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
