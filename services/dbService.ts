@@ -7,13 +7,20 @@ const SCHEDULE_COLLECTION = 'schedule';
 const CHATS_COLLECTION = 'chats';
 
 /**
- * Firestore does not accept 'undefined' values. 
- * This helper ensures objects are clean before transmission.
+ * Firestore strictly forbids 'undefined'.
+ * This utility recursively cleans objects to ensure only valid JSON reaches the cloud.
  */
-const sanitize = (data: any): any => {
-  return JSON.parse(JSON.stringify(data, (key, value) => {
-    return value === undefined ? null : value;
-  }));
+const sanitize = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(v => sanitize(v));
+  } else if (obj !== null && typeof obj === 'object') {
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([_, v]) => v !== undefined)
+        .map(([k, v]) => [k, sanitize(v)])
+    );
+  }
+  return obj;
 };
 
 export const dbService = {

@@ -1,6 +1,6 @@
 // Standard modular import for Firebase v9+
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyB3le-Xz8be_orb4lmuhEUoaLCNT6B1rDc",
