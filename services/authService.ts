@@ -1,12 +1,12 @@
 import { db } from './firebase';
-import { collection, getDocs, setDoc, doc, query, where } from 'firebase/firestore';
+import { collection, getDocs, setDoc, doc, getDoc } from 'firebase/firestore';
 import { UserProfile } from '../types';
 
 const SESSION_KEY = 'nexus_session_uid';
 const USERS_COLLECTION = 'users';
 
 export const authService = {
-  // Get all registered users from Firestore
+  // Get all registered users (useful for the login selection screen)
   getUsers: async (): Promise<UserProfile[]> => {
     try {
       const querySnapshot = await getDocs(collection(db, USERS_COLLECTION));
@@ -33,39 +33,48 @@ export const authService = {
     };
 
     try {
-      // Use setDoc to enforce the document ID matches the UID
       await setDoc(doc(db, USERS_COLLECTION, uid), newUser);
-      
-      // Auto login by setting local session
       localStorage.setItem(SESSION_KEY, newUser.uid);
       return newUser;
     } catch (error) {
       console.error("Error registering user:", error);
-      throw error;
+      throw new Error("Cloud registration failed. Check connection.");
     }
   },
 
-  // Login with PIN check (Client-side check for this simple kiosk-mode app)
+  // Login with PIN check
   login: async (uid: string, pin: string): Promise<{ success: boolean; user?: UserProfile }> => {
-    const users = await authService.getUsers();
-    const user = users.find(u => u.uid === uid);
-    
-    if (user && user.pin === pin) {
-      localStorage.setItem(SESSION_KEY, user.uid);
-      return { success: true, user };
+    try {
+      const userDoc = await getDoc(doc(db, USERS_COLLECTION, uid));
+      if (userDoc.exists()) {
+        const user = userDoc.data() as UserProfile;
+        if (user.pin === pin) {
+          localStorage.setItem(SESSION_KEY, user.uid);
+          return { success: true, user };
+        }
+      }
+      return { success: false };
+    } catch (error) {
+      console.error("Login fetch error:", error);
+      return { success: false };
     }
-    return { success: false };
   },
 
-  // Restore session
+  // Restore session with direct ID lookup for reliability
   restoreSession: async (): Promise<UserProfile | null> => {
     const uid = localStorage.getItem(SESSION_KEY);
     if (!uid) return null;
     
-    // We need to fetch users to get the full profile object
-    // In a real app, we'd fetch just the single doc, but sticking to pattern
-    const users = await authService.getUsers();
-    return users.find(u => u.uid === uid) || null;
+    try {
+      const userDoc = await getDoc(doc(db, USERS_COLLECTION, uid));
+      if (userDoc.exists()) {
+        return userDoc.data() as UserProfile;
+      }
+      return null;
+    } catch (error) {
+      console.error("Session restoration error:", error);
+      return null;
+    }
   },
 
   logout: () => {

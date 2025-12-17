@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { UserProfile, AppView, ScheduleEvent, TaskStatus } from '../types';
-import { Zap, Target, BookOpen, Clock, ArrowRight, Play, Sparkles, Calendar } from 'lucide-react';
+import { Zap, Target, BookOpen, Clock, ArrowRight, Play, Sparkles, Calendar, Cloud, CloudOff, AlertTriangle } from 'lucide-react';
 import { dbService } from '../services/dbService';
 
 interface DashboardProps {
@@ -13,43 +13,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
   const [stats, setStats] = useState({ pending: 0, done: 0, eventsToday: 0, total: 0 });
   const [nextEvent, setNextEvent] = useState<ScheduleEvent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncError, setSyncError] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setSyncError(false);
+    try {
+      const [tasks, schedule] = await Promise.all([
+        dbService.getTasks(user.uid),
+        dbService.getSchedule(user.uid)
+      ]);
+
+      const pending = tasks.filter(t => t.status === TaskStatus.PENDING).length;
+      const done = tasks.filter(t => t.status === TaskStatus.DONE).length;
+      
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const sortedSchedule = [...schedule].sort((a, b) => a.startTime.localeCompare(b.startTime));
+      const upcoming = sortedSchedule.find(e => {
+          const [h, m] = e.startTime.split(':').map(Number);
+          return (h * 60 + m) > currentMinutes;
+      });
+
+      setStats({ pending, done, eventsToday: schedule.length, total: tasks.length });
+      setNextEvent(upcoming || null);
+    } catch (error) {
+      console.error("Dashboard data load failed", error);
+      setSyncError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [tasks, schedule] = await Promise.all([
-          dbService.getTasks(user.uid),
-          dbService.getSchedule(user.uid)
-        ]);
-
-        const pending = tasks.filter(t => t.status === TaskStatus.PENDING).length;
-        const done = tasks.filter(t => t.status === TaskStatus.DONE).length;
-        
-        // Find next event based on current time
-        const now = new Date();
-        const currentMinutes = now.getHours() * 60 + now.getMinutes();
-        
-        // Sort schedule by time just in case
-        const sortedSchedule = [...schedule].sort((a, b) => a.startTime.localeCompare(b.startTime));
-        
-        const upcoming = sortedSchedule.find(e => {
-            const [h, m] = e.startTime.split(':').map(Number);
-            return (h * 60 + m) > currentMinutes;
-        });
-
-        setStats({
-          pending,
-          done,
-          eventsToday: schedule.length,
-          total: tasks.length
-        });
-        setNextEvent(upcoming || null);
-      } catch (error) {
-        console.error("Dashboard data load failed", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, [user.uid]);
 
@@ -58,15 +54,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest mb-2 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            {currentDate}
-          </p>
+          <div className="flex items-center gap-4 mb-2">
+             <p className="text-zinc-500 text-xs font-semibold uppercase tracking-widest flex items-center gap-2">
+               <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+               {currentDate}
+             </p>
+             
+             {/* Sync Status Badge */}
+             <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider transition-all
+               ${syncError 
+                 ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 cursor-pointer hover:bg-rose-500/20' 
+                 : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}
+             `} onClick={syncError ? fetchData : undefined}>
+                {syncError ? (
+                  <>
+                    <CloudOff className="w-3 h-3" />
+                    <span>Sync Error • Retry?</span>
+                  </>
+                ) : (
+                  <>
+                    <Cloud className="w-3 h-3" />
+                    <span>Cloud Active</span>
+                  </>
+                )}
+             </div>
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight">
             Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-rose-400 animate-pulse-slow">{user.name.split(' ')[0]}</span>.
           </h1>
         </div>
       </header>
+
+      {syncError && (
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-3 text-rose-300 animate-slide-up">
+           <AlertTriangle className="w-5 h-5 shrink-0" />
+           <p className="text-sm">We're having trouble reaching the cloud. Your data may not be saved. Check your internet connection or Firebase rules.</p>
+        </div>
+      )}
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -105,7 +129,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Up Next Hero */}
         <div className="lg:col-span-2 relative group rounded-3xl overflow-hidden border border-white/10 bg-zinc-900/30 backdrop-blur-xl transition-all duration-500 hover:border-indigo-500/30 hover:shadow-[0_0_30px_rgba(79,70,229,0.15)] hover:scale-[1.005]">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-zinc-900/0 to-purple-600/10 opacity-50 group-hover:opacity-100 transition-duration-700" />
           
@@ -167,7 +190,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
           </div>
         </div>
 
-        {/* Quick Actions */}
         <div className="space-y-6">
            <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest pl-1">Quick Actions</h3>
            <div className="grid gap-3">

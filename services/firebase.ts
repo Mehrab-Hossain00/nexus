@@ -1,3 +1,5 @@
+
+// Fix: Use standard modular import for Firebase v9+ to resolve exported member errors
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
@@ -10,6 +12,6 @@ const firebaseConfig = {
   appId: "1:869673549802:web:4d9ab9c389429c24aabc93"
 };
 
-// Initialize Firebase
+// Initialize Firebase instance
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);

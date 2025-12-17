@@ -5,10 +5,11 @@ import { ScheduleEvent } from "../types";
 export const geminiService = {
   // Create a chat instance using the high-performance Gemini 3 Pro model for complex academic tutoring
   createChat: (history: Content[] = []) => {
-    // Instantiate GoogleGenAI inside the method to ensure it always uses the most current API key
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    // Fix: Always instantiate GoogleGenAI with the required named parameter object
+    const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
     return ai.chats.create({
       model: 'gemini-3-pro-preview',
+      // History is used to maintain conversational context
       history: history,
       config: {
         systemInstruction: "You are the Nexus AI Tutor, an elite academic companion. 1. Use LaTeX for ALL math/science formulas (e.g. $E=mc^2$). 2. Provide clean, documented code snippets. 3. Maintain a professional, high-performance, and encouraging tone. Keep responses concise but information-dense.",
@@ -18,11 +19,13 @@ export const geminiService = {
 
   // Generate study schedules with Gemini 3 Flash
   generateSchedule: async (prompt: string): Promise<ScheduleEvent[]> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    // Fix: Strict initialization right before call
+    const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: [{ parts: [{ text: `Task: Generate a high-performance study schedule for: "${prompt}". Return as a raw JSON array of objects with keys: title, subject, startTime (HH:mm), durationMinutes (int), type (study/break/exam/other), and description.` }] }],
+        // Fix: Use string contents for simple text prompts as per examples
+        contents: `Task: Generate a high-performance study schedule for: "${prompt}". Return as a raw JSON array of objects with keys: title, subject, startTime (HH:mm), durationMinutes (int), type (study/break/exam/other), and description.`,
         config: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -40,14 +43,13 @@ export const geminiService = {
                 },
                 description: { type: Type.STRING }
               },
-              required: ["title", "startTime", "durationMinutes", "type"],
               propertyOrdering: ["title", "subject", "startTime", "durationMinutes", "type", "description"]
             }
           }
         }
       });
 
-      // The response.text property directly returns the extracted string
+      // Directly access .text property from GenerateContentResponse
       const data = JSON.parse(response.text || '[]');
       return data.map((item: any) => ({ ...item, id: crypto.randomUUID() }));
     } catch (error) {
@@ -58,7 +60,8 @@ export const geminiService = {
 
   // Multimodal asset analysis
   analyzeImage: async (base64Image: string, mimeType: string, prompt: string): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    // Fix: Strict initialization pattern
+    const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
@@ -69,7 +72,7 @@ export const geminiService = {
           ]
         }
       });
-      // Directly access .text property
+      // Directly access .text property from response
       return response.text || "I was unable to analyze this asset.";
     } catch (error) {
       console.error("Image analysis failed:", error);
