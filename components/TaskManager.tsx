@@ -34,8 +34,8 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       try {
         const fetchedTasks = await dbService.getTasks(user.uid);
         setTasks(fetchedTasks);
-      } catch (err) {
-        setError("Could not load tasks from cloud.");
+      } catch (err: any) {
+        setError(`Cloud Error: ${err.code || 'Sync Failed'}`);
       } finally {
         setIsLoading(false);
       }
@@ -47,15 +47,13 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
     if (!task) return;
     const newStatus = task.status === TaskStatus.DONE ? TaskStatus.PENDING : TaskStatus.DONE;
     
-    // Optimistic update
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
     
     try {
       await dbService.updateTaskStatus(id, newStatus);
     } catch (err) {
-      // Revert on failure
       setTasks(originalTasks);
-      setError("Sync failed. Change not saved.");
+      setError("Update failed. Check connection.");
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -67,7 +65,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       await dbService.deleteTask(id);
     } catch (err) {
       setTasks(originalTasks);
-      setError("Failed to delete from cloud.");
+      setError("Delete failed.");
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -76,6 +74,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const reminderVal = parseInt(formData.get('reminderOffset') as string);
+    const dueDateVal = formData.get('dueDate') as string;
     
     const newTask: Task = {
       id: crypto.randomUUID(),
@@ -83,7 +82,8 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       subject: formData.get('subject') as string,
       priority: formData.get('priority') as TaskPriority,
       status: TaskStatus.PENDING,
-      dueDate: formData.get('dueDate') as string,
+      // If due date is empty string, keep it as undefined (will be handled by sanitize)
+      dueDate: dueDateVal || undefined,
       reminderOffset: reminderVal > 0 ? reminderVal : undefined,
       createdAt: Date.now()
     };
@@ -94,20 +94,28 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
     
     try {
       await dbService.addTask(newTask, user.uid);
-    } catch (err) {
+    } catch (err: any) {
       setTasks(originalTasks);
-      setError("Cloud sync failed. Task not saved.");
-      setTimeout(() => setError(null), 4000);
+      setError(`Save Failed: ${err.code || 'Check rules'}`);
+      setTimeout(() => setError(null), 5000);
     }
   };
 
   const formatDueDate = (dateStr?: string) => {
       if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch {
+        return '';
+      }
   };
 
-  const isToday = (dateStr: string) => new Date(dateStr).toDateString() === new Date().toDateString();
+  const isToday = (dateStr: string) => {
+      try {
+        return new Date(dateStr).toDateString() === new Date().toDateString();
+      } catch { return false; }
+  };
 
   const filteredTasks = tasks
     .filter(t => filter === 'All' || t.status === (filter === 'Done' ? TaskStatus.DONE : TaskStatus.PENDING))
@@ -122,9 +130,13 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
   return (
     <div className="h-full flex flex-col animate-fade-in relative">
       {error && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-rose-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-2xl flex items-center gap-2 animate-bounce">
-           <AlertCircle className="w-4 h-4" />
-           {error}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-3 animate-bounce border border-rose-400/50">
+           <AlertCircle className="w-5 h-5" />
+           <div className="flex flex-col">
+              <span>{error}</span>
+              <span className="text-[10px] opacity-70 font-normal">Check console for details</span>
+           </div>
+           <button onClick={() => setError(null)}><X className="w-4 h-4" /></button>
         </div>
       )}
 

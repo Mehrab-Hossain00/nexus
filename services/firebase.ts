@@ -1,5 +1,4 @@
-
-// Fix: Use standard modular import for Firebase v9+ to resolve exported member errors
+// Standard modular import for Firebase v9+
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 

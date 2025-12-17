@@ -6,6 +6,16 @@ const TASKS_COLLECTION = 'tasks';
 const SCHEDULE_COLLECTION = 'schedule';
 const CHATS_COLLECTION = 'chats';
 
+/**
+ * Firestore does not accept 'undefined' values. 
+ * This helper ensures objects are clean before transmission.
+ */
+const sanitize = (data: any): any => {
+  return JSON.parse(JSON.stringify(data, (key, value) => {
+    return value === undefined ? null : value;
+  }));
+};
+
 export const dbService = {
   // --- TASKS ---
   
@@ -18,19 +28,19 @@ export const dbService = {
         tasks.push(doc.data() as Task);
       });
       return tasks.sort((a, b) => b.createdAt - a.createdAt);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
+    } catch (error: any) {
+      console.error("Firestore getTasks failed:", error.code, error.message);
       throw error;
     }
   },
 
   addTask: async (task: Task, userId: string) => {
     try {
-      const taskWithUser = { ...task, userId };
+      const taskWithUser = sanitize({ ...task, userId });
       await setDoc(doc(db, TASKS_COLLECTION, task.id), taskWithUser);
       return true;
-    } catch (error) {
-      console.error("Error adding task:", error);
+    } catch (error: any) {
+      console.error("Firestore addTask failed:", error.code, error.message);
       throw error;
     }
   },
@@ -38,8 +48,8 @@ export const dbService = {
   updateTaskStatus: async (taskId: string, newStatus: string) => {
     try {
       await updateDoc(doc(db, TASKS_COLLECTION, taskId), { status: newStatus });
-    } catch (error) {
-      console.error("Error updating status:", error);
+    } catch (error: any) {
+      console.error("Firestore updateTaskStatus failed:", error.code, error.message);
       throw error;
     }
   },
@@ -47,8 +57,8 @@ export const dbService = {
   deleteTask: async (taskId: string) => {
     try {
       await deleteDoc(doc(db, TASKS_COLLECTION, taskId));
-    } catch (error) {
-      console.error("Error deleting task:", error);
+    } catch (error: any) {
+      console.error("Firestore deleteTask failed:", error.code, error.message);
       throw error;
     }
   },
@@ -64,19 +74,19 @@ export const dbService = {
         events.push(doc.data() as ScheduleEvent);
       });
       return events.sort((a, b) => a.startTime.localeCompare(b.startTime));
-    } catch (error) {
-      console.error("Error fetching schedule:", error);
+    } catch (error: any) {
+      console.error("Firestore getSchedule failed:", error.code, error.message);
       throw error;
     }
   },
 
   saveScheduleEvent: async (event: ScheduleEvent, userId: string) => {
     try {
-      const eventWithUser = { ...event, userId };
+      const eventWithUser = sanitize({ ...event, userId });
       await setDoc(doc(db, SCHEDULE_COLLECTION, event.id), eventWithUser);
       return true;
-    } catch (error) {
-      console.error("Error saving event:", error);
+    } catch (error: any) {
+      console.error("Firestore saveScheduleEvent failed:", error.code, error.message);
       throw error;
     }
   },
@@ -84,8 +94,8 @@ export const dbService = {
   deleteScheduleEvent: async (eventId: string) => {
     try {
       await deleteDoc(doc(db, SCHEDULE_COLLECTION, eventId));
-    } catch (error) {
-      console.error("Error deleting event:", error);
+    } catch (error: any) {
+      console.error("Firestore deleteScheduleEvent failed:", error.code, error.message);
       throw error;
     }
   },
@@ -101,18 +111,18 @@ export const dbService = {
         sessions.push(doc.data() as ChatSession);
       });
       return sessions.sort((a, b) => b.updatedAt - a.updatedAt);
-    } catch (error) {
-      console.error("Error fetching chats:", error);
+    } catch (error: any) {
+      console.error("Firestore getChatSessions failed:", error.code, error.message);
       throw error;
     }
   },
 
   saveChatSession: async (session: ChatSession) => {
     try {
-      const sanitizedSession = JSON.parse(JSON.stringify(session));
+      const sanitizedSession = sanitize(session);
       await setDoc(doc(db, CHATS_COLLECTION, session.id), sanitizedSession);
-    } catch (error) {
-      console.error("Error saving chat:", error);
+    } catch (error: any) {
+      console.error("Firestore saveChatSession failed:", error.code, error.message);
       throw error;
     }
   },
@@ -120,8 +130,8 @@ export const dbService = {
   deleteChatSession: async (sessionId: string) => {
     try {
       await deleteDoc(doc(db, CHATS_COLLECTION, sessionId));
-    } catch (error) {
-      console.error("Error deleting chat session:", error);
+    } catch (error: any) {
+      console.error("Firestore deleteChatSession failed:", error.code, error.message);
       throw error;
     }
   }

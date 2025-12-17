@@ -5,6 +5,13 @@ import { UserProfile } from '../types';
 const SESSION_KEY = 'nexus_session_uid';
 const USERS_COLLECTION = 'users';
 
+// Firestore does not accept 'undefined' values.
+const sanitize = (data: any): any => {
+  return JSON.parse(JSON.stringify(data, (key, value) => {
+    return value === undefined ? null : value;
+  }));
+};
+
 export const authService = {
   // Get all registered users (useful for the login selection screen)
   getUsers: async (): Promise<UserProfile[]> => {
@@ -33,12 +40,13 @@ export const authService = {
     };
 
     try {
-      await setDoc(doc(db, USERS_COLLECTION, uid), newUser);
+      const sanitizedUser = sanitize(newUser);
+      await setDoc(doc(db, USERS_COLLECTION, uid), sanitizedUser);
       localStorage.setItem(SESSION_KEY, newUser.uid);
       return newUser;
-    } catch (error) {
-      console.error("Error registering user:", error);
-      throw new Error("Cloud registration failed. Check connection.");
+    } catch (error: any) {
+      console.error("Error registering user:", error.code, error.message);
+      throw new Error(`Registration failed: ${error.code || 'Cloud Error'}`);
     }
   },
 
@@ -54,8 +62,8 @@ export const authService = {
         }
       }
       return { success: false };
-    } catch (error) {
-      console.error("Login fetch error:", error);
+    } catch (error: any) {
+      console.error("Login fetch error:", error.code, error.message);
       return { success: false };
     }
   },
@@ -71,8 +79,8 @@ export const authService = {
         return userDoc.data() as UserProfile;
       }
       return null;
-    } catch (error) {
-      console.error("Session restoration error:", error);
+    } catch (error: any) {
+      console.error("Session restoration error:", error.code, error.message);
       return null;
     }
   },
