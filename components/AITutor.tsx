@@ -5,11 +5,10 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Send, Image as ImageIcon, Sparkles, MessageSquare, Trash2, Plus, Menu, X, Loader2 } from 'lucide-react';
+import { Send, Image as ImageIcon, Sparkles, MessageSquare, Trash2, Plus, Menu, X, Loader2, RefreshCcw } from 'lucide-react';
 import { geminiService } from '../services/geminiService';
 import { dbService } from '../services/dbService';
 import { ChatMessage, ChatSession, UserProfile } from '../types';
-import { Content, GenerateContentResponse } from '@google/genai';
 
 interface AITutorProps {
   user: UserProfile;
@@ -32,16 +31,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
       const loaded = await dbService.getChatSessions(user.uid);
       setSessions(loaded);
     }
-  };
-
-  const getValidHistory = (msgs: ChatMessage[]): Content[] => {
-    const history: Content[] = [];
-    msgs.forEach((m) => {
-      if (m.isError) return;
-      if (history.length > 0 && history[history.length - 1].role === m.role) return;
-      history.push({ role: m.role, parts: [{ text: m.text }] });
-    });
-    return history;
   };
 
   const initializeChat = () => {
@@ -100,31 +89,29 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         const updatedMsgs = [...messages, userMsg, modelMsg];
         await updateOrCreateSession(updatedMsgs, currentInput || "Image Analysis");
       } else {
-        const history = getValidHistory(messages.concat(userMsg));
-        const chat = geminiService.createChat(history.slice(0, -1));
-        const result = await chat.sendMessageStream({ message: currentInput });
-        const modelMsgId = crypto.randomUUID();
+        const history = messages.map(m => ({ 
+          role: m.role === 'model' ? 'assistant' : 'user', 
+          content: m.text 
+        }));
         
-        setMessages(prev => [...prev, { id: modelMsgId, role: 'model', text: '', timestamp: Date.now() }]);
+        const data = await geminiService.chat([...history, { role: 'user', content: currentInput }]);
+        responseText = data.choices?.[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
 
-        let fullText = '';
-        for await (const chunk of result) {
-          const c = chunk as GenerateContentResponse;
-          fullText += c.text || '';
-          setMessages(prev => prev.map(m => m.id === modelMsgId ? { ...m, text: fullText } : m));
-        }
-        responseText = fullText;
-        // Fix: Explicitly typing the model response as ChatMessage to avoid type inference issues with role literal
-        const modelMsg: ChatMessage = { id: modelMsgId, role: 'model', text: responseText, timestamp: Date.now() };
+        const modelMsg: ChatMessage = { id: crypto.randomUUID(), role: 'model', text: responseText, timestamp: Date.now() };
         const updatedMsgs = [...messages, userMsg, modelMsg];
+        setMessages(prev => [...prev, modelMsg]);
         await updateOrCreateSession(updatedMsgs, currentInput);
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("Chat Error:", err);
+      const isRateLimit = err.message.includes("429") || err.message.toLowerCase().includes("provider");
+      
       setMessages(prev => [...prev, { 
         id: crypto.randomUUID(), 
         role: 'model', 
-        text: `**Intelligence Link Interrupted**\n\nThe Nexus Core is experiencing turbulence. Please check your connection and try your request again.`, 
+        text: isRateLimit 
+          ? `**Nexus Core Overloaded**\n\nThe free provider for this model is currently under heavy load. We've tried several fallbacks, but the network is still congested. Please try again in a moment.` 
+          : `**Intelligence Link Interrupted**\n\n${err.message || "An unexpected error occurred."}`, 
         timestamp: Date.now(), 
         isError: true 
       }]);
@@ -169,7 +156,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
 
   return (
     <div className="h-full flex bg-zinc-950/50 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-3xl animate-fade-in shadow-2xl relative">
-      {/* Sidebar Toggle for Mobile */}
       <button 
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         className="md:hidden absolute top-4 left-4 z-50 p-2 bg-zinc-900 border border-white/10 rounded-lg text-white"
@@ -205,14 +191,14 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white">Nexus Intelligence</h3>
-                <p className="text-zinc-500 max-w-xs mt-1">Ready for academic assistance, multimodal analysis, and code generation.</p>
+                <p className="text-zinc-500 max-w-xs mt-1">Multi-Model Adaptive Link Established.</p>
               </div>
             </div>
           )}
 
           {messages.map((m) => (
             <div key={m.id} className={`flex gap-4 ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
-              <div className={`max-w-[85%] rounded-2xl p-4 ${m.role === 'user' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-zinc-900/50 border border-white/5 text-zinc-100 backdrop-blur-md'}`}>
+              <div className={`max-w-[85%] rounded-2xl p-4 ${m.role === 'user' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-zinc-900/50 border border-white/5 text-zinc-100 backdrop-blur-md'} ${m.isError ? 'border-rose-500/50 bg-rose-500/5' : ''}`}>
                 {m.imageUrl && <img src={m.imageUrl} alt="User input" className="max-w-xs rounded-xl mb-3 border border-white/10" />}
                 <div className="prose prose-invert prose-sm max-w-none prose-indigo">
                   <ReactMarkdown
@@ -242,6 +228,21 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                     {m.text}
                   </ReactMarkdown>
                 </div>
+                {m.isError && (
+                  <button 
+                    onClick={() => {
+                       const lastUserMsg = messages.filter(msg => msg.role === 'user').pop();
+                       if (lastUserMsg) {
+                          setMessages(prev => prev.slice(0, -1)); // Remove error
+                          setInput(lastUserMsg.text);
+                          handleSend();
+                       }
+                    }}
+                    className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <RefreshCcw className="w-3 h-3" /> Retry Connection
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -249,7 +250,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
             <div className="flex gap-4 animate-pulse">
               <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-4 flex items-center gap-3">
                 <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
-                <span className="text-xs font-medium text-zinc-500 tracking-widest uppercase">Nexus Computing...</span>
+                <span className="text-xs font-medium text-zinc-500 tracking-widest uppercase">Adaptive Link Tuning...</span>
               </div>
             </div>
           )}
@@ -287,7 +288,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
             </button>
           </form>
           <div className="mt-2 text-center">
-            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em]">Secured by Nexus Core Intelligence</span>
+            <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em]">Resilient Core Active • Multiple Models Available</span>
           </div>
         </div>
       </div>
