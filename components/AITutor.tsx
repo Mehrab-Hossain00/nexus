@@ -5,7 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Send, Image as ImageIcon, Sparkles, MessageSquare, Trash2, Plus, Menu, X, Loader2, ShieldAlert, Key } from 'lucide-react';
+import { Send, Image as ImageIcon, Sparkles, MessageSquare, Trash2, Plus, Menu, X, Loader2, ShieldAlert, Edit2, Check, AlertTriangle } from 'lucide-react';
 import { geminiService } from '../services/geminiService';
 import { dbService } from '../services/dbService';
 import { ChatMessage, ChatSession, UserProfile } from '../types';
@@ -23,6 +23,11 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
+  // New States for Sidebar Improvements
+  const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
+  const [renamingTitle, setRenamingTitle] = useState('');
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -30,7 +35,8 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
     if (user?.uid) {
       try {
         const loaded = await dbService.getChatSessions(user.uid);
-        setSessions(loaded);
+        // Ensure strictly sorted by updatedAt descending (most recent first)
+        setSessions(loaded.sort((a, b) => b.updatedAt - a.updatedAt));
       } catch (err) {
         console.error("Failed to load chat sessions", err);
       }
@@ -87,11 +93,41 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
     }
   };
 
-  const handleReconnectKey = async () => {
-    if (window.aistudio) {
-      await window.aistudio.openSelectKey();
-      // After selection, we can retry the last message or just clear the error state
-      window.location.reload(); 
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!renamingSessionId || !renamingTitle.trim()) return;
+
+    const session = sessions.find(s => s.id === renamingSessionId);
+    if (session) {
+      const updated = { ...session, title: renamingTitle.trim(), updatedAt: Date.now() };
+      await dbService.saveChatSession(updated);
+      setRenamingSessionId(null);
+      loadSessions();
+    }
+  };
+
+  const startRenaming = (session: ChatSession, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenamingSessionId(session.id);
+    setRenamingTitle(session.title);
+  };
+
+  const confirmDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeletingSessionId(id);
+  };
+
+  const handleDeleteSession = async () => {
+    if (!deletingSessionId) return;
+    try {
+      await dbService.deleteChatSession(deletingSessionId);
+      if (activeSessionId === deletingSessionId) {
+        handleNewChat();
+      }
+      setDeletingSessionId(null);
+      loadSessions();
+    } catch (err) {
+      console.error("Delete failed", err);
     }
   };
 
@@ -165,7 +201,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         id: crypto.randomUUID(), 
         role: 'model', 
         text: isKeyError 
-          ? `**Neural Link Authorization Failure**\n\nThe intelligence core requires an active API key from a paid GCP project. Please connect your credentials to proceed.`
+          ? `**Neural Link Authorization Failure**\n\nThe intelligence core requires an active API key. Please ensure an authorization key is provided in the environment.`
           : `**Neural Link Failure**\n\n${err.message || "The connection to the Gemini Intelligence Core was interrupted."}`, 
         timestamp: Date.now(),
         isError: true
@@ -179,19 +215,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
     setMessages([]);
     setInput('');
     setImageFile(null);
-  };
-
-  const handleDeleteSession = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    try {
-      await dbService.deleteChatSession(id);
-      if (activeSessionId === id) {
-        handleNewChat();
-      }
-      loadSessions();
-    } catch (err) {
-      console.error("Delete failed", err);
-    }
   };
 
   return (
@@ -218,7 +241,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
           {sessions.map(session => (
             <div 
               key={session.id}
-              onClick={() => setActiveSessionId(session.id)}
+              onClick={() => activeSessionId !== session.id && setActiveSessionId(session.id)}
               className={`
                 group relative p-3 rounded-xl cursor-pointer transition-all border
                 ${activeSessionId === session.id 
@@ -226,16 +249,41 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                   : 'border-transparent text-zinc-500 hover:bg-white/5 hover:text-zinc-300'}
               `}
             >
-              <div className="text-sm font-medium truncate pr-6">{session.title}</div>
-              <div className="text-[10px] opacity-50 font-mono mt-1">
-                {new Date(session.updatedAt).toLocaleDateString()}
-              </div>
-              <button 
-                onClick={(e) => handleDeleteSession(session.id, e)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-rose-400 transition-all hover:bg-rose-500/10 rounded-lg"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              {renamingSessionId === session.id ? (
+                <form onSubmit={handleRename} className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                  <input 
+                    autoFocus
+                    value={renamingTitle}
+                    onChange={e => setRenamingTitle(e.target.value)}
+                    className="bg-zinc-800 border border-indigo-500 text-xs text-white px-2 py-1 rounded w-full outline-none"
+                    onBlur={() => setRenamingSessionId(null)}
+                  />
+                  <button type="submit" className="text-indigo-400 hover:text-indigo-200">
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                </form>
+              ) : (
+                <>
+                  <div className="text-sm font-medium truncate pr-16">{session.title}</div>
+                  <div className="text-[10px] opacity-50 font-mono mt-1">
+                    {new Date(session.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={(e) => startRenaming(session, e)}
+                      className="p-1.5 text-zinc-500 hover:text-indigo-400 transition-all hover:bg-indigo-500/10 rounded-lg"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button 
+                      onClick={(e) => confirmDelete(session.id, e)}
+                      className="p-1.5 text-zinc-500 hover:text-rose-400 transition-all hover:bg-rose-500/10 rounded-lg"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
           {sessions.length === 0 && (
@@ -260,7 +308,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> : <Sparkles className="w-4 h-4 text-indigo-400" />}
                    {activeSessionId ? sessions.find(s => s.id === activeSessionId)?.title : 'Nexus Core Interface'}
                 </h2>
-                <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Neural Link Active • Gemini 3 Flash</div>
+                <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Neural Link Active • Gemini 2.0 Flash</div>
               </div>
            </div>
         </div>
@@ -273,7 +321,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                </div>
                <div>
                   <h3 className="text-white font-bold text-xl mb-2">Neural Workspace</h3>
-                  <p className="text-zinc-500 text-sm leading-relaxed">Initialized connection with Nexus AI. Ask for tutoring, code reviews, or document analysis.</p>
+                  <p className="text-zinc-500 text-sm leading-relaxed">Initialized connection with Nexus AI. Powered by Gemini 2.0 Flash for ultra-fast, high-density tutoring.</p>
                </div>
             </div>
           )}
@@ -329,16 +377,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                     {msg.text}
                   </ReactMarkdown>
                 </div>
-                
-                {msg.isError && (
-                  <button 
-                    onClick={handleReconnectKey}
-                    className="mt-6 w-full py-3 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 rounded-xl text-xs font-bold uppercase tracking-widest text-rose-200 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Key className="w-4 h-4" />
-                    Connect API Key
-                  </button>
-                )}
               </div>
             </div>
           ))}
@@ -398,6 +436,37 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
           </form>
         </div>
       </div>
+
+      {/* Confirmation Modal for Deletion */}
+      {deletingSessionId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm bg-zinc-900 border border-rose-500/20 rounded-3xl p-8 shadow-2xl space-y-6 text-center">
+            <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto border border-rose-500/20">
+              <AlertTriangle className="w-8 h-8 text-rose-500" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-white tracking-tight">Erase Neural Record?</h3>
+              <p className="text-zinc-500 text-sm leading-relaxed">
+                This will permanently delete this conversation and its history. This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button 
+                onClick={() => setDeletingSessionId(null)}
+                className="flex-1 py-3 bg-zinc-800 text-white font-bold rounded-xl hover:bg-zinc-700 transition-colors active:scale-95"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDeleteSession}
+                className="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-500 transition-colors shadow-lg shadow-rose-900/20 active:scale-95"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
