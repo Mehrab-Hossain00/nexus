@@ -5,7 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Send, Image as ImageIcon, Sparkles, MessageSquare, Trash2, Plus, Menu, X, Loader2, ShieldAlert } from 'lucide-react';
+import { Send, Image as ImageIcon, Sparkles, MessageSquare, Trash2, Plus, Menu, X, Loader2, ShieldAlert, Key } from 'lucide-react';
 import { geminiService } from '../services/geminiService';
 import { dbService } from '../services/dbService';
 import { ChatMessage, ChatSession, UserProfile } from '../types';
@@ -87,6 +87,14 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
     }
   };
 
+  const handleReconnectKey = async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+      // After selection, we can retry the last message or just clear the error state
+      window.location.reload(); 
+    }
+  };
+
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if ((!input.trim() && !imageFile) || isLoading) return;
@@ -151,10 +159,14 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
       }
     } catch (err: any) {
       console.error("Chat Error:", err);
+      const isKeyError = err.message === "API_KEY_MISSING" || err.message?.includes("API key");
+      
       setMessages(prev => [...prev, { 
         id: crypto.randomUUID(), 
         role: 'model', 
-        text: `**Neural Link Failure**\n\n${err.message || "The connection to the Gemini Intelligence Core was interrupted."}`, 
+        text: isKeyError 
+          ? `**Neural Link Authorization Failure**\n\nThe intelligence core requires an active API key from a paid GCP project. Please connect your credentials to proceed.`
+          : `**Neural Link Failure**\n\n${err.message || "The connection to the Gemini Intelligence Core was interrupted."}`, 
         timestamp: Date.now(),
         isError: true
       }]);
@@ -317,6 +329,16 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                     {msg.text}
                   </ReactMarkdown>
                 </div>
+                
+                {msg.isError && (
+                  <button 
+                    onClick={handleReconnectKey}
+                    className="mt-6 w-full py-3 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 rounded-xl text-xs font-bold uppercase tracking-widest text-rose-200 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Key className="w-4 h-4" />
+                    Connect API Key
+                  </button>
+                )}
               </div>
             </div>
           ))}

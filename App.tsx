@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar.tsx';
 import { Dashboard } from './components/Dashboard.tsx';
@@ -77,7 +78,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-black text-zinc-100 font-sans">
-      {/* Ambient Lighting Layers */}
       <div className="fixed top-0 left-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[128px] pointer-events-none -translate-x-1/2 -translate-y-1/2 z-0" />
       <div className="fixed bottom-0 right-0 w-[600px] h-[600px] bg-purple-600/5 rounded-full blur-[128px] pointer-events-none translate-x-1/3 translate-y-1/3 z-0" />
       

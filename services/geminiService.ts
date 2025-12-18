@@ -1,19 +1,11 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScheduleEvent } from "../types";
 
-/**
- * Lazy initializer for the Gemini API to prevent runtime crashes 
- * during module load if process.env.API_KEY is not yet populated.
- */
-function getAI() {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("Nexus Intelligence Core: API_KEY environment variable is missing.");
-  }
-  return new GoogleGenAI({ apiKey });
-}
+// Standard initialization as per Google GenAI SDK guidelines
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const SYSTEM_INSTRUCTION = "Nexus AI Tutor: Elite academic companion. 1. Use LaTeX for math (e.g., $E=mc^2$). 2. Provide clean, production-ready code. 3. Be professional, concise, and high-density. 4. You are the Nexus Tutor, a peak-performance intelligence core.";
+const SYSTEM_INSTRUCTION = "Nexus AI Tutor: Elite academic companion. 1. Use LaTeX for math. 2. Provide clean, production-ready code. 3. Be professional, concise, and high-density. You are the Nexus Tutor.";
 
 export const geminiService = {
   /**
@@ -21,15 +13,13 @@ export const geminiService = {
    */
   chatStream: async function* (messages: any[]): AsyncGenerator<string> {
     try {
-      const ai = getAI();
-      
       const history = messages.slice(0, -1).map(m => ({
-        role: m.role === 'model' || m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.text || m.content || "" }]
+        role: m.role === 'model' ? 'model' : 'user',
+        parts: [{ text: m.text || "" }]
       }));
       
       const lastMessage = messages[messages.length - 1];
-      const prompt = lastMessage.text || lastMessage.content || "Hello";
+      const prompt = lastMessage.text || "Hello";
 
       const responseStream = await ai.models.generateContentStream({
         model: 'gemini-3-flash-preview',
@@ -41,8 +31,7 @@ export const geminiService = {
       });
 
       for await (const chunk of responseStream) {
-        const text = chunk.text;
-        if (text) yield text;
+        if (chunk.text) yield chunk.text;
       }
     } catch (error: any) {
       console.error("Nexus Core Error:", error);
@@ -55,7 +44,6 @@ export const geminiService = {
    */
   generateSchedule: async (prompt: string): Promise<ScheduleEvent[]> => {
     try {
-      const ai = getAI();
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Generate a high-performance study plan for: "${prompt}". Organize logically for maximum retention.`,
@@ -67,12 +55,12 @@ export const geminiService = {
             items: {
               type: Type.OBJECT,
               properties: {
-                title: { type: Type.STRING, description: "Clear, actionable session title" },
+                title: { type: Type.STRING },
                 subject: { type: Type.STRING },
-                startTime: { type: Type.STRING, description: "Format: HH:mm" },
+                startTime: { type: Type.STRING },
                 durationMinutes: { type: Type.INTEGER },
                 type: { type: Type.STRING, enum: ['study', 'break', 'exam', 'other'] },
-                description: { type: Type.STRING, description: "Brief goal for this session" }
+                description: { type: Type.STRING }
               },
               required: ["title", "startTime", "durationMinutes", "type"]
             }
@@ -82,14 +70,12 @@ export const geminiService = {
 
       const text = response.text;
       const parsed = JSON.parse(text || "[]");
-      const events = Array.isArray(parsed) ? parsed : (parsed.schedule || []);
-      
-      return events.map((item: any) => ({
+      return parsed.map((item: any) => ({
         ...item,
         id: crypto.randomUUID()
       }));
     } catch (error: any) {
-      console.error("Scheduler Logic Failure:", error);
+      console.error("Scheduler Failure:", error);
       throw error;
     }
   },
@@ -99,7 +85,6 @@ export const geminiService = {
    */
   analyzeImage: async (base64Image: string, mimeType: string, prompt: string): Promise<string> => {
     try {
-      const ai = getAI();
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: [
@@ -111,13 +96,13 @@ export const geminiService = {
           }
         ],
         config: {
-          systemInstruction: "Expert visual tutor. Deconstruct diagrams, solve math from images, or explain visual notes with elite clarity."
+          systemInstruction: "Expert visual tutor. Deconstruct diagrams or explain visual notes with elite clarity."
         }
       });
 
-      return response.text || "Core analysis returned no data.";
+      return response.text || "No analysis available.";
     } catch (error: any) {
-      console.error("Vision Core Failure:", error);
+      console.error("Vision Failure:", error);
       throw error;
     }
   }
