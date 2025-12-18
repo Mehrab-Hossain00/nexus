@@ -1,9 +1,17 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScheduleEvent } from "../types";
 
-// Standard initialization as per Google GenAI SDK guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+/**
+ * Lazy initialization of the Google GenAI SDK.
+ * Prevents the application from crashing at load-time if process.env.API_KEY is undefined.
+ */
+function getAI() {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("Nexus Intelligence Core: API_KEY is missing from environment. Application requires an authorized key to communicate with the core.");
+  }
+  return new GoogleGenAI({ apiKey });
+}
 
 const SYSTEM_INSTRUCTION = "Nexus AI Tutor: Elite academic companion. 1. Use LaTeX for math. 2. Provide clean, production-ready code. 3. Be professional, concise, and high-density. You are the Nexus Tutor.";
 
@@ -13,6 +21,7 @@ export const geminiService = {
    */
   chatStream: async function* (messages: any[]): AsyncGenerator<string> {
     try {
+      const ai = getAI();
       const history = messages.slice(0, -1).map(m => ({
         role: m.role === 'model' ? 'model' : 'user',
         parts: [{ text: m.text || "" }]
@@ -44,6 +53,7 @@ export const geminiService = {
    */
   generateSchedule: async (prompt: string): Promise<ScheduleEvent[]> => {
     try {
+      const ai = getAI();
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Generate a high-performance study plan for: "${prompt}". Organize logically for maximum retention.`,
@@ -85,6 +95,7 @@ export const geminiService = {
    */
   analyzeImage: async (base64Image: string, mimeType: string, prompt: string): Promise<string> => {
     try {
+      const ai = getAI();
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: [

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nexus Study Pro</title>
     <script>
-      // Non-destructive shim for process.env
+      // Shim process.env to prevent "process is not defined" runtime crashes in browser
       window.process = window.process || {};
       window.process.env = window.process.env || {};
     </script>
@@ -84,10 +84,10 @@
     "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
     "firebase/app": "https://esm.sh/firebase@^12.7.0/app",
     "firebase/firestore": "https://esm.sh/firebase@^12.7.0/firestore",
-    "react-syntax-highlighter/": "https://esm.sh/react-syntax-highlighter@^16.1.0/",
     "firebase/": "https://esm.sh/firebase@^12.7.0/",
     "vite": "https://esm.sh/vite@^7.3.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "react-syntax-highlighter/": "https://esm.sh/react-syntax-highlighter@^16.1.0/"
   }
 }
 </script>
