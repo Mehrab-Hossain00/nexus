@@ -2,22 +2,27 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ScheduleEvent } from "../types";
 
 /**
- * INITIALIZATION
- * Using the provided process.env.API_KEY which is managed by the environment.
+ * Lazy initializer for the Gemini API to prevent runtime crashes 
+ * during module load if process.env.API_KEY is not yet populated.
  */
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+function getAI() {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("Nexus Intelligence Core: API_KEY environment variable is missing.");
+  }
+  return new GoogleGenAI({ apiKey });
+}
 
 const SYSTEM_INSTRUCTION = "Nexus AI Tutor: Elite academic companion. 1. Use LaTeX for math (e.g., $E=mc^2$). 2. Provide clean, production-ready code. 3. Be professional, concise, and high-density. 4. You are the Nexus Tutor, a peak-performance intelligence core.";
 
 export const geminiService = {
   /**
    * High-speed streaming chat using Gemini 3 Flash.
-   * This provides real-time word-by-word updates to the UI.
    */
   chatStream: async function* (messages: any[]): AsyncGenerator<string> {
     try {
-      // Map standard message format to Gemini-compliant history
-      // Note: We only take the previous messages as history.
+      const ai = getAI();
+      
       const history = messages.slice(0, -1).map(m => ({
         role: m.role === 'model' || m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.text || m.content || "" }]
@@ -36,29 +41,21 @@ export const geminiService = {
       });
 
       for await (const chunk of responseStream) {
-        // Access .text property as per SDK rules
         const text = chunk.text;
-        if (text) {
-          yield text;
-        }
+        if (text) yield text;
       }
     } catch (error: any) {
       console.error("Nexus Core Error:", error);
-      // Clean error message for user display
-      let errorMessage = "Intelligence link failed.";
-      if (error.message?.includes("401") || error.message?.includes("API_KEY")) {
-        errorMessage = "Nexus Authorization Failed. Please check system credentials.";
-      }
-      throw new Error(errorMessage);
+      throw new Error(error.message || "Intelligence link failed.");
     }
   },
 
   /**
    * Generates a structured study schedule using Gemini 3 Pro.
-   * Pro model used for higher reasoning in scheduling logic.
    */
   generateSchedule: async (prompt: string): Promise<ScheduleEvent[]> => {
     try {
+      const ai = getAI();
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-preview',
         contents: `Generate a high-performance study plan for: "${prompt}". Organize logically for maximum retention.`,
@@ -102,6 +99,7 @@ export const geminiService = {
    */
   analyzeImage: async (base64Image: string, mimeType: string, prompt: string): Promise<string> => {
     try {
+      const ai = getAI();
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: [

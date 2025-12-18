@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -29,8 +28,12 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
 
   const loadSessions = async () => {
     if (user?.uid) {
-      const loaded = await dbService.getChatSessions(user.uid);
-      setSessions(loaded);
+      try {
+        const loaded = await dbService.getChatSessions(user.uid);
+        setSessions(loaded);
+      } catch (err) {
+        console.error("Failed to load chat sessions", err);
+      }
     }
   };
 
@@ -55,7 +58,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  // Define the helper to update or create chat sessions in Firestore
   const updateOrCreateSession = async (newMessages: ChatMessage[], title: string) => {
     if (!user?.uid) return;
 
@@ -100,7 +102,8 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
       imageUrl: currentFile ? URL.createObjectURL(currentFile) : undefined
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
     setInput('');
     setImageFile(null);
     setIsLoading(true);
@@ -115,11 +118,12 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         const base64 = await base64Promise;
         const responseText = await geminiService.analyzeImage(base64, currentFile.type, currentInput || "Analyze asset.");
         const modelMsg: ChatMessage = { id: crypto.randomUUID(), role: 'model', text: responseText, timestamp: Date.now() };
-        setMessages(prev => [...prev, modelMsg]);
-        await updateOrCreateSession([...messages, userMsg, modelMsg], currentInput || "Image Analysis");
+        const finalMessages = [...newMessages, modelMsg];
+        setMessages(finalMessages);
+        await updateOrCreateSession(finalMessages, currentInput || "Image Analysis");
         setIsLoading(false);
       } else {
-        const history = messages.map(m => ({ 
+        const history = newMessages.map(m => ({ 
           role: m.role, 
           text: m.text 
         }));
@@ -129,7 +133,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         setMessages(prev => [...prev, initialModelMsg]);
 
         let fullText = '';
-        const stream = geminiService.chatStream([...history, { role: 'user', text: currentInput }]);
+        const stream = geminiService.chatStream(history);
         
         setIsLoading(false); 
         let hasStarted = false;
@@ -140,14 +144,13 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
           setMessages(prev => prev.map(m => m.id === modelMsgId ? { ...m, text: fullText } : m));
         }
 
-        if (!hasStarted) throw new Error("Empty response from core.");
+        if (!hasStarted) throw new Error("Empty response from Nexus Core.");
         
         const finalModelMsg = { ...initialModelMsg, text: fullText };
-        await updateOrCreateSession([...messages, userMsg, finalModelMsg], currentInput);
+        await updateOrCreateSession([...newMessages, finalModelMsg], currentInput);
       }
     } catch (err: any) {
       console.error("Chat Error:", err);
-      // Fixed shorthand timestamp error and provided a proper timestamp for the error message
       setMessages(prev => [...prev, { 
         id: crypto.randomUUID(), 
         role: 'model', 
@@ -168,22 +171,19 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
 
   const handleDeleteSession = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    await dbService.deleteChatSession(id);
-    if (activeSessionId === id) {
-      handleNewChat();
-    }
-    loadSessions();
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setImageFile(e.target.files[0]);
+    try {
+      await dbService.deleteChatSession(id);
+      if (activeSessionId === id) {
+        handleNewChat();
+      }
+      loadSessions();
+    } catch (err) {
+      console.error("Delete failed", err);
     }
   };
 
   return (
     <div className="flex h-full rounded-3xl bg-zinc-900/10 border border-white/5 overflow-hidden animate-fade-in backdrop-blur-xl">
-      {/* Sessions Sidebar */}
       <aside 
         className={`
           bg-black/40 border-r border-white/5 transition-all duration-500 flex flex-col
@@ -234,9 +234,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         </div>
       </aside>
 
-      {/* Chat Area */}
       <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden">
-        {/* Chat Header */}
         <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/20 backdrop-blur-md">
            <div className="flex items-center gap-4">
               <button 
@@ -255,7 +253,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
            </div>
         </div>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
           {messages.length === 0 && !isLoading && (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-6">
@@ -265,17 +262,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                <div>
                   <h3 className="text-white font-bold text-xl mb-2">Neural Workspace</h3>
                   <p className="text-zinc-500 text-sm leading-relaxed">Initialized connection with Nexus AI. Ask for tutoring, code reviews, or document analysis.</p>
-               </div>
-               <div className="grid grid-cols-2 gap-2 w-full">
-                  {['Explain Quantum Entanglement', 'Analyze Python Script', 'Solve LateX Calc', 'Study Strategy'].map(suggest => (
-                    <button 
-                      key={suggest}
-                      onClick={() => setInput(suggest)}
-                      className="text-[10px] font-bold uppercase tracking-wider p-2 bg-white/5 border border-white/10 rounded-lg text-zinc-400 hover:text-white hover:border-white/20 transition-all"
-                    >
-                      {suggest}
-                    </button>
-                  ))}
                </div>
             </div>
           )}
@@ -331,20 +317,16 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                     {msg.text}
                   </ReactMarkdown>
                 </div>
-                <div className="mt-4 text-[10px] text-zinc-600 font-mono text-right">
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
               </div>
             </div>
           ))}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Area */}
         <div className="p-4 bg-black/40 backdrop-blur-xl border-t border-white/5 shrink-0">
           <form onSubmit={handleSend} className="max-w-4xl mx-auto">
             {imageFile && (
-              <div className="flex items-center gap-3 p-2 bg-indigo-500/10 border border-indigo-500/30 rounded-xl mb-3 animate-slide-up">
+              <div className="flex items-center gap-3 p-2 bg-indigo-500/10 border border-indigo-500/30 rounded-xl mb-3">
                  <div className="w-12 h-12 rounded-lg bg-indigo-500/20 flex items-center justify-center overflow-hidden border border-indigo-500/30">
                     <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-full h-full object-cover" />
                  </div>
@@ -364,13 +346,13 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={imageFile ? "Add instruction for image..." : "Query the Nexus Core..."}
                 disabled={isLoading}
-                className="w-full bg-zinc-900/60 border border-white/10 rounded-2xl pl-4 pr-32 py-4 text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500/50 transition-all focus:shadow-[0_0_20px_rgba(99,102,241,0.1)] text-sm md:text-base"
+                className="w-full bg-zinc-900/60 border border-white/10 rounded-2xl pl-4 pr-32 py-4 text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500/50 transition-all text-sm md:text-base"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <input 
                   type="file" 
                   ref={fileInputRef}
-                  onChange={handleImageChange}
+                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                   accept="image/*"
                   className="hidden"
                 />
@@ -385,15 +367,12 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                 <button 
                   type="submit"
                   disabled={isLoading || (!input.trim() && !imageFile)}
-                  className="p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:bg-zinc-800 active:scale-95 group-hover:scale-105"
+                  className="p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 active:scale-95"
                 >
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 </button>
               </div>
             </div>
-            <p className="text-[10px] text-zinc-600 mt-2 text-center tracking-wider uppercase font-bold">
-               Nexus Intelligence Link Secured • Avoid sharing sensitive credentials
-            </p>
           </form>
         </div>
       </div>
