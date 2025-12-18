@@ -3,21 +3,19 @@ import { ScheduleEvent } from "../types";
 
 /**
  * Lazy initialization of the Google GenAI SDK.
- * Prevents the application from crashing at load-time if process.env.API_KEY is undefined.
+ * Uses process.env.API_KEY exclusively as required.
  */
 function getAI() {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("Nexus Intelligence Core: API_KEY is missing from environment. Application requires an authorized key to communicate with the core.");
-  }
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenAI({ apiKey: apiKey || "" });
 }
 
+const MODEL_ID = 'gemini-2.0-flash-exp';
 const SYSTEM_INSTRUCTION = "Nexus AI Tutor: Elite academic companion. 1. Use LaTeX for math. 2. Provide clean, production-ready code. 3. Be professional, concise, and high-density. You are the Nexus Tutor.";
 
 export const geminiService = {
   /**
-   * High-speed streaming chat using Gemini 3 Flash.
+   * High-speed streaming chat using Gemini 2.0 Flash Exp.
    */
   chatStream: async function* (messages: any[]): AsyncGenerator<string> {
     try {
@@ -31,7 +29,7 @@ export const geminiService = {
       const prompt = lastMessage.text || "Hello";
 
       const responseStream = await ai.models.generateContentStream({
-        model: 'gemini-3-flash-preview',
+        model: MODEL_ID,
         contents: [...history, { role: 'user', parts: [{ text: prompt }] }],
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
@@ -49,13 +47,13 @@ export const geminiService = {
   },
 
   /**
-   * Generates a structured study schedule using Gemini 3 Pro.
+   * Generates a structured study schedule using Gemini 2.0 Flash Exp.
    */
   generateSchedule: async (prompt: string): Promise<ScheduleEvent[]> => {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: MODEL_ID,
         contents: `Generate a high-performance study plan for: "${prompt}". Organize logically for maximum retention.`,
         config: {
           systemInstruction: "You are a master academic planner. Return a valid JSON array of schedule objects.",
@@ -91,13 +89,13 @@ export const geminiService = {
   },
 
   /**
-   * Visual analysis using Gemini 3 Flash.
+   * Visual analysis using Gemini 2.0 Flash Exp.
    */
   analyzeImage: async (base64Image: string, mimeType: string, prompt: string): Promise<string> => {
     try {
       const ai = getAI();
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: MODEL_ID,
         contents: [
           {
             parts: [
