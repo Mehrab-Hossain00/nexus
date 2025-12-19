@@ -6,15 +6,22 @@ export enum AppView {
   FOCUS = 'FOCUS',
   TUTOR = 'TUTOR',
   ANALYTICS = 'ANALYTICS',
+  GROUPS = 'GROUPS',
   SETTINGS = 'SETTINGS'
 }
+
+export type UserStatus = 'online' | 'offline' | 'studying' | 'break';
 
 export interface UserProfile {
   uid: string;
   name: string;
   avatar?: string;
-  pin: string; // 4-digit security pin
+  pin: string;
   biometricEnabled?: boolean;
+  status?: UserStatus;
+  currentSubject?: string;
+  dailyGoalMinutes?: number;
+  lastActivity?: number;
 }
 
 export enum TaskPriority {
@@ -34,8 +41,8 @@ export interface Task {
   subject: string;
   priority: TaskPriority;
   status: TaskStatus;
-  dueDate?: string; // ISO String YYYY-MM-DDTHH:mm
-  reminderOffset?: number; // Minutes before due date
+  dueDate?: string;
+  reminderOffset?: number;
   createdAt: number;
 }
 
@@ -43,8 +50,8 @@ export interface ScheduleEvent {
   id: string;
   title: string;
   subject?: string;
-  startTime: string; // ISO String or HH:mm
-  date?: string; // YYYY-MM-DD
+  startTime: string;
+  date?: string;
   durationMinutes: number;
   type: 'study' | 'break' | 'exam' | 'other';
   description?: string;
@@ -68,8 +75,42 @@ export interface ChatSession {
   messages: ChatMessage[];
 }
 
-export interface AnalyticsData {
-  date: string;
-  tasksCompleted: number;
-  focusMinutes: number;
+// --- NEW COLLABORATIVE TYPES ---
+
+export interface StudyGroup {
+  id: string;
+  name: string;
+  description: string;
+  isPublic: boolean;
+  ownerId: string;
+  members: string[]; // UIDs
+  groupCode: string;
+  createdAt: number;
+}
+
+export interface GroupMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: number;
+}
+
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  userName: string;
+  type: 'session_started' | 'session_completed' | 'joined_group' | 'created_group';
+  subject?: string;
+  duration?: number; // seconds
+  timestamp: number;
+}
+
+export interface StudySession {
+  id: string;
+  userId: string;
+  subject: string;
+  duration: number; // seconds
+  timestamp: number;
+  date: string; // YYYY-MM-DD
 }

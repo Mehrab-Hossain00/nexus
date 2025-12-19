@@ -1,25 +1,21 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScheduleEvent } from "../types";
 
 /**
- * Lazy initialization of the Google GenAI SDK.
- * Uses process.env.API_KEY exclusively as required.
+ * Update to use Gemini 3 Pro Preview as recommended for complex text/reasoning tasks.
  */
-function getAI() {
-  const apiKey = process.env.API_KEY;
-  return new GoogleGenAI({ apiKey: apiKey || "" });
-}
-
-const MODEL_ID = 'gemini-2.0-flash-exp';
+const MODEL_ID = 'gemini-3-pro-preview';
 const SYSTEM_INSTRUCTION = "Nexus AI Tutor: Elite academic companion. 1. Use LaTeX for math. 2. Provide clean, production-ready code. 3. Be professional, concise, and high-density. You are the Nexus Tutor.";
 
 export const geminiService = {
   /**
-   * High-speed streaming chat using Gemini 2.0 Flash Exp.
+   * High-speed streaming chat using Gemini 3 Pro.
    */
   chatStream: async function* (messages: any[]): AsyncGenerator<string> {
     try {
-      const ai = getAI();
+      // Create fresh instance right before call as required by guidelines
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const history = messages.slice(0, -1).map(m => ({
         role: m.role === 'model' ? 'model' : 'user',
         parts: [{ text: m.text || "" }]
@@ -38,6 +34,7 @@ export const geminiService = {
       });
 
       for await (const chunk of responseStream) {
+        // Access chunk.text property directly (not a method)
         if (chunk.text) yield chunk.text;
       }
     } catch (error: any) {
@@ -47,11 +44,11 @@ export const geminiService = {
   },
 
   /**
-   * Generates a structured study schedule using Gemini 2.0 Flash Exp.
+   * Generates a structured study schedule using Gemini 3 Pro.
    */
   generateSchedule: async (prompt: string): Promise<ScheduleEvent[]> => {
     try {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: MODEL_ID,
         contents: `Generate a high-performance study plan for: "${prompt}". Organize logically for maximum retention.`,
@@ -76,6 +73,7 @@ export const geminiService = {
         },
       });
 
+      // Extract text output via .text property
       const text = response.text;
       const parsed = JSON.parse(text || "[]");
       return parsed.map((item: any) => ({
@@ -89,11 +87,11 @@ export const geminiService = {
   },
 
   /**
-   * Visual analysis using Gemini 2.0 Flash Exp.
+   * Visual analysis using Gemini 3 Pro.
    */
   analyzeImage: async (base64Image: string, mimeType: string, prompt: string): Promise<string> => {
     try {
-      const ai = getAI();
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const response = await ai.models.generateContent({
         model: MODEL_ID,
         contents: [
@@ -109,6 +107,7 @@ export const geminiService = {
         }
       });
 
+      // Extract text output via .text property
       return response.text || "No analysis available.";
     } catch (error: any) {
       console.error("Vision Failure:", error);

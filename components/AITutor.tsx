@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -23,7 +24,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  // New States for Sidebar Improvements
   const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
   const [renamingTitle, setRenamingTitle] = useState('');
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
@@ -35,10 +35,9 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
     if (user?.uid) {
       try {
         const loaded = await dbService.getChatSessions(user.uid);
-        // Ensure strictly sorted by updatedAt descending (most recent first)
         setSessions(loaded.sort((a, b) => b.updatedAt - a.updatedAt));
       } catch (err) {
-        console.error("Failed to load chat sessions", err);
+        console.error("Failed to load chats", err);
       }
     }
   };
@@ -71,7 +70,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
       const newSession: ChatSession = {
         id: crypto.randomUUID(),
         userId: user.uid,
-        title: title.slice(0, 30) || "New Discussion",
+        title: title.slice(0, 30) || "New Chat",
         createdAt: Date.now(),
         updatedAt: Date.now(),
         messages: newMessages,
@@ -141,7 +140,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
-      text: currentInput || (currentFile ? "Analyze this asset." : ""),
+      text: currentInput || (currentFile ? "Tell me about this image." : ""),
       timestamp: Date.now(),
       imageUrl: currentFile ? URL.createObjectURL(currentFile) : undefined
     };
@@ -160,11 +159,11 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
           reader.readAsDataURL(currentFile);
         });
         const base64 = await base64Promise;
-        const responseText = await geminiService.analyzeImage(base64, currentFile.type, currentInput || "Analyze asset.");
+        const responseText = await geminiService.analyzeImage(base64, currentFile.type, currentInput || "Analyze image.");
         const modelMsg: ChatMessage = { id: crypto.randomUUID(), role: 'model', text: responseText, timestamp: Date.now() };
         const finalMessages = [...newMessages, modelMsg];
         setMessages(finalMessages);
-        await updateOrCreateSession(finalMessages, currentInput || "Image Analysis");
+        await updateOrCreateSession(finalMessages, currentInput || "Image Help");
         setIsLoading(false);
       } else {
         const history = newMessages.map(m => ({ 
@@ -188,7 +187,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
           setMessages(prev => prev.map(m => m.id === modelMsgId ? { ...m, text: fullText } : m));
         }
 
-        if (!hasStarted) throw new Error("Empty response from Nexus Core.");
+        if (!hasStarted) throw new Error("Could not get a response.");
         
         const finalModelMsg = { ...initialModelMsg, text: fullText };
         await updateOrCreateSession([...newMessages, finalModelMsg], currentInput);
@@ -201,8 +200,8 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         id: crypto.randomUUID(), 
         role: 'model', 
         text: isKeyError 
-          ? `**Neural Link Authorization Failure**\n\nThe intelligence core requires an active API key. Please ensure an authorization key is provided in the environment.`
-          : `**Neural Link Failure**\n\n${err.message || "The connection to the Gemini Intelligence Core was interrupted."}`, 
+          ? `**AI Connection Error**\n\nI need an API key to work. Please make sure one is set up.`
+          : `**Something went wrong**\n\n${err.message || "I lost connection. Please try again."}`, 
         timestamp: Date.now(),
         isError: true
       }]);
@@ -228,7 +227,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
           <h2 className="text-white font-bold tracking-tight flex items-center gap-2">
              <MessageSquare className="w-4 h-4 text-indigo-400" />
-             Link History
+             Chat History
           </h2>
           <button 
             onClick={handleNewChat}
@@ -288,7 +287,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
           ))}
           {sessions.length === 0 && (
             <div className="py-8 text-center text-zinc-600 text-xs italic">
-              No session logs.
+              No chats yet.
             </div>
           )}
         </div>
@@ -306,9 +305,9 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
               <div>
                 <h2 className="text-white font-bold tracking-tight flex items-center gap-2">
                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> : <Sparkles className="w-4 h-4 text-indigo-400" />}
-                   {activeSessionId ? sessions.find(s => s.id === activeSessionId)?.title : 'Nexus Core Interface'}
+                   {activeSessionId ? sessions.find(s => s.id === activeSessionId)?.title : 'AI Study Help'}
                 </h2>
-                <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Neural Link Active • Gemini 2.0 Flash</div>
+                <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Helpful AI Active • Gemini Pro</div>
               </div>
            </div>
         </div>
@@ -320,8 +319,8 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                   <Sparkles className="w-10 h-10 text-indigo-400" />
                </div>
                <div>
-                  <h3 className="text-white font-bold text-xl mb-2">Neural Workspace</h3>
-                  <p className="text-zinc-500 text-sm leading-relaxed">Initialized connection with Nexus AI. Powered by Gemini 2.0 Flash for ultra-fast, high-density tutoring.</p>
+                  <h3 className="text-white font-bold text-xl mb-2">How can I help you?</h3>
+                  <p className="text-zinc-500 text-sm leading-relaxed">Ask anything about your studies, upload notes for an explanation, or get help with homework.</p>
                </div>
             </div>
           )}
@@ -340,13 +339,13 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                         {msg.isError ? <ShieldAlert className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                      </div>
                      <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${msg.isError ? 'text-rose-400' : 'text-indigo-400'}`}>
-                        {msg.isError ? 'System Alert' : 'Nexus Intelligence'}
+                        {msg.isError ? 'Alert' : 'AI Response'}
                      </span>
                   </div>
                 )}
                 
                 {msg.imageUrl && (
-                  <img src={msg.imageUrl} alt="Analysis" className="max-w-full rounded-xl mb-4 border border-white/10 shadow-lg" />
+                  <img src={msg.imageUrl} alt="Uploaded" className="max-w-full rounded-xl mb-4 border border-white/10 shadow-lg" />
                 )}
                 
                 <div className="prose prose-invert prose-sm max-w-none text-zinc-200 leading-relaxed">
@@ -392,7 +391,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                  </div>
                  <div className="flex-1 overflow-hidden">
                     <div className="text-xs font-bold text-white truncate">{imageFile.name}</div>
-                    <div className="text-[10px] text-indigo-400 uppercase font-mono">Attachment Prepared</div>
+                    <div className="text-[10px] text-indigo-400 uppercase font-mono">Image Selected</div>
                  </div>
                  <button onClick={() => setImageFile(null)} className="p-1.5 hover:bg-white/10 rounded-full text-zinc-500 hover:text-white transition-colors">
                     <X className="w-4 h-4" />
@@ -404,7 +403,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
               <input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={imageFile ? "Add instruction for image..." : "Query the Nexus Core..."}
+                placeholder={imageFile ? "What should I do with this image?" : "Ask a question..."}
                 disabled={isLoading}
                 className="w-full bg-zinc-900/60 border border-white/10 rounded-2xl pl-4 pr-32 py-4 text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500/50 transition-all text-sm md:text-base"
               />
@@ -420,7 +419,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="p-2.5 text-zinc-500 hover:text-indigo-400 hover:bg-white/5 rounded-xl transition-all"
-                  title="Attach analysis image"
+                  title="Upload notes or image"
                 >
                   <ImageIcon className="w-5 h-5" />
                 </button>
@@ -437,7 +436,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         </div>
       </div>
 
-      {/* Confirmation Modal for Deletion */}
       {deletingSessionId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-sm bg-zinc-900 border border-rose-500/20 rounded-3xl p-8 shadow-2xl space-y-6 text-center">
@@ -445,7 +443,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
               <AlertTriangle className="w-8 h-8 text-rose-500" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-xl font-bold text-white tracking-tight">Erase Neural Record?</h3>
+              <h3 className="text-xl font-bold text-white tracking-tight">Delete this chat?</h3>
               <p className="text-zinc-500 text-sm leading-relaxed">
                 This will permanently delete this conversation and its history. This action cannot be undone.
               </p>
@@ -455,7 +453,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                 onClick={() => setDeletingSessionId(null)}
                 className="flex-1 py-3 bg-zinc-800 text-white font-bold rounded-xl hover:bg-zinc-700 transition-colors active:scale-95"
               >
-                Cancel
+                Keep It
               </button>
               <button 
                 onClick={handleDeleteSession}

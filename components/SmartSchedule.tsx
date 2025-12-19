@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Sparkles, Calendar as CalendarIcon, Clock, Plus, Tag, X, ChevronRight, Trash2, Loader2, ChevronLeft } from 'lucide-react';
 import { ScheduleEvent, UserProfile } from '../types';
@@ -6,36 +7,25 @@ import { dbService } from '../services/dbService';
 
 interface SmartScheduleProps {
     user: UserProfile;
+    subjects: string[];
+    setSubjects: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
+export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, setSubjects }) => {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [prompt, setPrompt] = useState('');
   
-  // View Control
   const [viewMode, setViewMode] = useState<'Day' | 'Week' | 'Month'>('Day');
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Modal states
   const [showAiModal, setShowAiModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   
-  // AI Form state
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  
-  // Subject Management
-  const [availableSubjects, setAvailableSubjects] = useState<string[]>(() => {
-    const saved = localStorage.getItem('nexus_subjects');
-    return saved ? JSON.parse(saved) : ["Math", "Physics", "Computer Science", "History", "Literature", "Chemistry"];
-  });
   const [newSubjectName, setNewSubjectName] = useState('');
   const [isAddingSubject, setIsAddingSubject] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem('nexus_subjects', JSON.stringify(availableSubjects));
-  }, [availableSubjects]);
 
   useEffect(() => {
     loadSchedule();
@@ -65,7 +55,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
 
   const getWeekDays = (date: Date) => {
       const start = new Date(date);
-      start.setDate(date.getDate() - date.getDay()); // Sunday start
+      start.setDate(date.getDate() - date.getDay()); 
       const days = [];
       for (let i = 0; i < 7; i++) {
           const d = new Date(start);
@@ -89,7 +79,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
               return d >= startStr && d <= endStr;
           });
       }
-      else { // Month
+      else { 
           const y = selectedDate.getFullYear();
           const m = selectedDate.getMonth();
           return events.filter(e => {
@@ -109,8 +99,8 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
 
   const addCustomSubject = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newSubjectName.trim() && !availableSubjects.includes(newSubjectName.trim())) {
-        setAvailableSubjects(prev => [...prev, newSubjectName.trim()]);
+    if (newSubjectName.trim() && !subjects.includes(newSubjectName.trim())) {
+        setSubjects(prev => [...prev, newSubjectName.trim()]);
         setSelectedSubjects(prev => [...prev, newSubjectName.trim()]); 
         setNewSubjectName('');
         setIsAddingSubject(false);
@@ -119,7 +109,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
 
   const removeCustomSubject = (e: React.MouseEvent, sub: string) => {
     e.stopPropagation();
-    setAvailableSubjects(prev => prev.filter(s => s !== sub));
+    setSubjects(prev => prev.filter(s => s !== sub));
     setSelectedSubjects(prev => prev.filter(s => s !== sub));
   };
 
@@ -131,27 +121,23 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
     try {
       let finalPrompt = prompt;
       if (selectedSubjects.length > 0) {
-        finalPrompt = `${prompt}. Focus on the following subjects: ${selectedSubjects.join(", ")}.`;
+        finalPrompt = `${prompt}. Subjects to include: ${selectedSubjects.join(", ")}.`;
       }
       
       const generated = await geminiService.generateSchedule(finalPrompt);
-      
       const todayStr = toDateString(new Date());
       
       for (const event of generated) {
-          // AI events default to today
           const eventWithDate = { ...event, date: todayStr };
           await dbService.saveScheduleEvent(eventWithDate, user.uid);
       }
       
-      const updatedList = await dbService.getSchedule(user.uid);
-      setEvents(updatedList);
-      
+      await loadSchedule();
       setShowAiModal(false);
       setPrompt('');
       setSelectedSubjects([]);
     } catch (err) {
-      alert("Failed to generate schedule. Please check console.");
+      alert("Plan generation failed.");
     } finally {
       setIsGenerating(false);
     }
@@ -173,11 +159,9 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
         description: formData.get('description') as string
     };
     
-    const updatedEvents = [...events, newEvent].sort((a, b) => a.startTime.localeCompare(b.startTime));
-    setEvents(updatedEvents);
     setShowManualModal(false);
-    
     await dbService.saveScheduleEvent(newEvent, user.uid);
+    await loadSchedule();
   };
 
   const GroupedEventList = ({ eventsForDay }: { eventsForDay: ScheduleEvent[] }) => (
@@ -209,7 +193,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Schedule</h1>
-          <p className="text-zinc-500 text-sm mt-1">AI-Optimized planner.</p>
+          <p className="text-zinc-500 text-sm mt-1">Plan your study routine.</p>
         </div>
         <div className="flex gap-3">
             <button 
@@ -229,7 +213,6 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
         </div>
       </header>
 
-      {/* View Controls & Navigation */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-zinc-900/20 p-2 rounded-2xl border border-white/5">
          <div className="flex items-center bg-black/40 rounded-xl p-1">
              {['Day', 'Week', 'Month'].map(m => (
@@ -254,7 +237,6 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
          </div>
       </div>
 
-      {/* Timeline / Grid */}
       <div className="flex-1 overflow-y-auto custom-scrollbar relative min-h-[400px]">
          {viewMode === 'Day' && (
             <div className="space-y-8 pl-0 pb-20 relative pt-4">
@@ -272,20 +254,15 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
                 ) : (
                     filteredEvents.sort((a, b) => a.startTime.localeCompare(b.startTime)).map((event, index) => (
                         <div key={event.id} className="relative pl-24 group animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
-                            {/* Time Marker */}
                             <div className="absolute left-4 top-6 w-16 text-right text-xs font-mono text-zinc-500 group-hover:text-white transition-colors">
                                 {event.startTime}
                             </div>
-
-                            {/* Node */}
                             <div className={`
                                 absolute left-[92px] top-6 w-4 h-4 rounded-full border-[3px] z-10 bg-black transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_15px_currentColor]
                                 ${event.type === 'study' ? 'border-indigo-500 text-indigo-500' : 
                                 event.type === 'break' ? 'border-emerald-500 text-emerald-500' : 
                                 event.type === 'exam' ? 'border-rose-500 text-rose-500' : 'border-zinc-500 text-zinc-500'}
                             `} />
-                            
-                            {/* Card */}
                             <div className={`
                                 p-6 rounded-2xl border-y border-r border-l-4 transition-all duration-300 relative overflow-hidden group-hover:-translate-y-1 group-hover:shadow-lg group-hover:scale-[1.01]
                                 ${event.type === 'break' ? 'bg-emerald-900/5 border-white/5 border-l-emerald-500 hover:bg-emerald-900/10' : 
@@ -318,7 +295,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
                                         </button>
                                     </div>
                                 </div>
-                                <p className="text-sm text-zinc-400 leading-relaxed relative z-10">{event.description || `Focused session on ${event.title}`}</p>
+                                <p className="text-sm text-zinc-400 leading-relaxed relative z-10">{event.description || `Session: ${event.title}`}</p>
                             </div>
                         </div>
                     ))
@@ -332,7 +309,6 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
                      const dateStr = toDateString(day);
                      const dayEvents = events.filter(e => (e.date || toDateString(new Date())) === dateStr);
                      const isToday = dateStr === toDateString(new Date());
-                     
                      return (
                          <div key={dateStr} className={`bg-zinc-900/20 rounded-xl border ${isToday ? 'border-indigo-500/50 bg-indigo-500/5 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'border-white/5'} p-3 min-h-[300px] hover:bg-zinc-800/30 transition-colors`}>
                              <div className={`text-center mb-4 pb-2 border-b ${isToday ? 'border-indigo-500/30' : 'border-white/5'}`}>
@@ -348,33 +324,19 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
          
          {viewMode === 'Month' && (
              <div className="grid grid-cols-7 gap-2">
-                 {/* Simplified Month View - just days of month */}
                  {Array.from({ length: new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate() }, (_, i) => {
                      const d = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i + 1);
                      const dateStr = toDateString(d);
                      const dayEvents = events.filter(e => (e.date || toDateString(new Date())) === dateStr);
                      const isToday = dateStr === toDateString(new Date());
-                     
                      return (
                          <div key={i} className={`aspect-square bg-zinc-900/30 rounded-lg border ${isToday ? 'border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.3)]' : 'border-white/5'} p-2 hover:bg-zinc-800/50 transition-all hover:scale-105 cursor-pointer relative group`}>
                              <div className={`text-xs font-bold ${isToday ? 'text-indigo-400' : 'text-zinc-500'}`}>{i + 1}</div>
                              {dayEvents.length > 0 && (
                                  <div className="mt-2 space-y-1">
                                      {dayEvents.slice(0, 3).map(e => (
-                                         <div key={e.id} className="w-full h-1.5 rounded-full bg-indigo-500/50 shadow-[0_0_5px_rgba(99,102,241,0.5)]" />
+                                         <div key={e.id} className="w-full h-1.5 rounded-full bg-indigo-500/50" />
                                      ))}
-                                     {dayEvents.length > 3 && <div className="text-[8px] text-zinc-600 text-center">+ {dayEvents.length - 3}</div>}
-                                 </div>
-                             )}
-                             {/* Hover Tooltip for Month Day */}
-                             {dayEvents.length > 0 && (
-                                 <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 w-48 bg-black border border-white/10 rounded-xl p-3 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
-                                     <div className="text-xs font-bold text-white mb-2">{d.toLocaleDateString()}</div>
-                                     <div className="space-y-2">
-                                         {dayEvents.map(e => (
-                                             <div key={e.id} className="text-[10px] text-zinc-400 truncate border-l-2 border-indigo-500 pl-2">{e.title}</div>
-                                         ))}
-                                     </div>
                                  </div>
                              )}
                          </div>
@@ -384,7 +346,6 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
          )}
       </div>
 
-      {/* AI Modal */}
       {showAiModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="w-full max-w-lg bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl animate-fade-in relative overflow-hidden">
@@ -401,9 +362,9 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
              
              <form onSubmit={handleGenerate}>
                 <div className="mb-6">
-                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Focus Subjects</label>
+                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Your Subjects</label>
                     <div className="flex flex-wrap gap-2">
-                        {availableSubjects.map(sub => (
+                        {subjects.map(sub => (
                             <button
                                 key={sub}
                                 type="button"
@@ -418,7 +379,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
                                 {sub}
                                 {selectedSubjects.includes(sub) && (
                                     <span 
-                                        onClick={(e) => removeCustomSubject(e, sub)}
+                                        onClick={(e) => { e.stopPropagation(); removeCustomSubject(e, sub); }}
                                         className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 hover:bg-white/20 rounded-full"
                                     >
                                         <X className="w-3 h-3" />
@@ -426,116 +387,94 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user }) => {
                                 )}
                             </button>
                         ))}
-                        
-                        {/* Add Subject Button/Input */}
                         {isAddingSubject ? (
                             <div className="flex items-center gap-2 bg-zinc-900 border border-indigo-500/50 rounded-full px-3 py-1 animate-fade-in">
                                 <input 
                                     autoFocus
                                     value={newSubjectName}
                                     onChange={(e) => setNewSubjectName(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && addCustomSubject(e)}
-                                    placeholder="Subject..."
-                                    className="bg-transparent border-none text-xs text-white placeholder-zinc-500 focus:outline-none w-24"
+                                    placeholder="Name..."
+                                    className="bg-transparent border-none text-xs text-white focus:outline-none w-24"
                                 />
-                                <button onClick={addCustomSubject} className="text-indigo-400 hover:text-white">
-                                    <Plus className="w-3 h-3" />
-                                </button>
-                                <button onClick={() => setIsAddingSubject(false)} className="text-zinc-500 hover:text-white">
-                                    <X className="w-3 h-3" />
-                                </button>
+                                <button onClick={addCustomSubject} className="text-indigo-400 hover:text-white"><Plus className="w-3 h-3" /></button>
                             </div>
                         ) : (
                             <button
                                 type="button"
                                 onClick={() => setIsAddingSubject(true)}
-                                className="text-xs px-3 py-2 rounded-full border border-dashed border-zinc-700 text-zinc-500 hover:text-white hover:border-zinc-500 transition-colors flex items-center gap-1 active:scale-95"
+                                className="text-xs px-3 py-2 rounded-full border border-dashed border-zinc-700 text-zinc-500 hover:text-white transition-colors flex items-center gap-1"
                             >
                                 <Plus className="w-3 h-3" /> Add
                             </button>
                         )}
                     </div>
                 </div>
-
                 <div className="mb-6">
                     <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Requirements</label>
                     <textarea 
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="e.g. I have a Calculus midterm tomorrow covering integrals. Start at 9 AM, include short breaks every hour, and a lunch break at 1 PM."
-                        className="w-full h-32 bg-zinc-900/50 border border-white/10 rounded-xl p-4 text-white placeholder-zinc-600 focus:border-indigo-500/50 focus:bg-black/50 outline-none resize-none transition-all text-sm leading-relaxed focus:shadow-[0_0_15px_rgba(99,102,241,0.1)]"
+                        placeholder="Describe your goals for today..."
+                        className="w-full h-32 bg-zinc-900/50 border border-white/10 rounded-xl p-4 text-white focus:border-indigo-500/50 outline-none resize-none transition-all text-sm"
                     />
                 </div>
-                
                 <button 
                     type="submit" 
                     disabled={isGenerating || (!prompt && selectedSubjects.length === 0)}
-                    className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]"
+                    className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-[0.98]"
                 >
-                    {isGenerating ? (
-                        <span className="flex items-center justify-center gap-2">
-                            <Sparkles className="w-4 h-4 animate-spin" /> Generating Strategy...
-                        </span>
-                    ) : 'Generate Schedule'}
+                    {isGenerating ? 'Generating...' : 'Generate Schedule'}
                 </button>
              </form>
           </div>
         </div>
       )}
 
-      {/* Manual Add Modal */}
       {showManualModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="w-full max-w-md bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl animate-fade-in relative overflow-hidden">
+          <div className="w-full max-w-md bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
             <div className="flex justify-between items-center mb-6">
                  <h3 className="text-xl font-bold text-white">Add Event</h3>
-                 <button onClick={() => setShowManualModal(false)} className="text-zinc-500 hover:text-white">
-                     <X className="w-5 h-5" />
-                 </button>
+                 <button onClick={() => setShowManualModal(false)} className="text-zinc-500 hover:text-white"><X className="w-5 h-5" /></button>
              </div>
             <form onSubmit={handleManualAdd} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Title</label>
-                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all focus:shadow-[0_0_15px_rgba(99,102,241,0.1)]" placeholder="e.g. Read History Chapter 4" />
+                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none" placeholder="e.g. Read Book" />
               </div>
-              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Date</label>
-                  <input name="date" type="date" required defaultValue={toDateString(new Date())} className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all [color-scheme:dark]" />
+                  <input name="date" type="date" required defaultValue={toDateString(new Date())} className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white [color-scheme:dark]" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Start Time</label>
-                  <input name="startTime" type="time" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all [color-scheme:dark]" />
+                  <input name="startTime" type="time" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white [color-scheme:dark]" />
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Subject</label>
-                  <input name="subject" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all" list="subjects-list" />
-                  <datalist id="subjects-list">
-                      {availableSubjects.map(s => <option key={s} value={s} />)}
-                  </datalist>
+                  <select name="subject" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all">
+                      {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </div>
                 <div>
                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Type</label>
-                   <select name="type" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all appearance-none">
-                     <option value="study">Study Session</option>
+                   <select name="type" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none">
+                     <option value="study">Study</option>
                      <option value="break">Break</option>
                      <option value="exam">Exam</option>
                      <option value="other">Other</option>
                    </select>
                 </div>
               </div>
-              
               <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Duration (min)</label>
-                  <input name="duration" type="number" min="5" step="5" defaultValue="50" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all" />
+                  <input name="duration" type="number" min="5" step="5" defaultValue="50" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white" />
               </div>
-
-              <button type="submit" className="w-full mt-4 px-6 py-3.5 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-all active:scale-95">Add Event</button>
+              <button type="submit" className="w-full mt-4 px-6 py-3.5 bg-white text-black font-bold rounded-xl active:scale-95">Add Event</button>
             </form>
           </div>
         </div>
