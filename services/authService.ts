@@ -1,5 +1,6 @@
+
 import { db } from './firebase';
-import { collection, getDocs, setDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, setDoc, doc, getDoc, getDocFromCache, getDocFromServer } from 'firebase/firestore';
 import { UserProfile } from '../types';
 
 const SESSION_KEY = 'nexus_session_uid';
@@ -68,19 +69,32 @@ export const authService = {
     }
   },
 
-  // Restore session with direct ID lookup for reliability
+  // Restore session with offline-aware logic
   restoreSession: async (): Promise<UserProfile | null> => {
     const uid = localStorage.getItem(SESSION_KEY);
     if (!uid) return null;
     
     try {
+      // Attempt to get from cache first for speed and offline support
       const userDoc = await getDoc(doc(db, USERS_COLLECTION, uid));
       if (userDoc.exists()) {
         return userDoc.data() as UserProfile;
       }
       return null;
     } catch (error: any) {
-      console.error("Session restoration error:", error.code, error.message);
+      // If 'unavailable', it's a network issue. Since we enabled persistence, 
+      // Firestore usually handles this, but if the document isn't in cache yet:
+      console.error("Session restoration error:", error.code || error.message);
+      
+      // Attempt a final check from cache specifically if it failed due to being offline
+      if (error.code === 'unavailable') {
+        try {
+            const cachedDoc = await getDocFromCache(doc(db, USERS_COLLECTION, uid));
+            return cachedDoc.data() as UserProfile;
+        } catch (cacheError) {
+            console.warn("User not found in local cache either.");
+        }
+      }
       return null;
     }
   },

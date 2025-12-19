@@ -12,11 +12,10 @@ import { Login } from './components/Login.tsx';
 import { authService } from './services/authService.ts';
 import { dbService } from './services/dbService.ts';
 import { AppView, UserProfile } from './types.ts';
-import { BellRing, X, User as UserIcon, Check, Sparkles } from 'lucide-react';
+import { BellRing, X, User as UserIcon, Check, Sparkles, Target } from 'lucide-react';
 
 const DEFAULT_SUBJECTS = ["Math", "Physics", "Chemistry", "Biology"];
 
-// Avatar styles and seeds for variety
 const AVATAR_PRESETS = [
   { style: 'micah', seed: 'Felix' },
   { style: 'micah', seed: 'Aneka' },
@@ -38,7 +37,6 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [atmosphere, setAtmosphere] = useState('indigo');
 
-  // --- GLOBAL TIMER & SUBJECTS STATE ---
   const [subjects, setSubjects] = useState<string[]>(() => {
     const saved = localStorage.getItem('nexus_subjects');
     try {
@@ -61,7 +59,6 @@ const App: React.FC = () => {
   const [showAlarmToast, setShowAlarmToast] = useState(false);
   const timerIntervalRef = useRef<any>(null);
 
-  // --- PERSISTENCE ---
   useEffect(() => {
     localStorage.setItem('nexus_subjects', JSON.stringify(subjects));
   }, [subjects]);
@@ -74,7 +71,6 @@ const App: React.FC = () => {
     localStorage.setItem('nexus_timer_muted', isMuted.toString());
   }, [isMuted]);
 
-  // --- AUTH INITIALIZATION ---
   useEffect(() => {
     const initSession = async () => {
       try {
@@ -96,7 +92,6 @@ const App: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
-  // --- TIMER BACKGROUND LOGIC ---
   useEffect(() => {
     const savedEnd = localStorage.getItem('nexus_timer_end');
     const savedActive = localStorage.getItem('nexus_timer_active') === 'true';
@@ -171,8 +166,8 @@ const App: React.FC = () => {
         playTone(220, now + 0.1, 0.6);
         break;
       case 'break':
-        playTone(523.25, now, 1.0, 0.1); // C5
-        playTone(659.25, now + 0.1, 1.0, 0.05); // E5
+        playTone(523.25, now, 1.0, 0.1);
+        playTone(659.25, now + 0.1, 1.0, 0.05);
         break;
       case 'complete':
         playTone(880, now, 1);
@@ -208,6 +203,35 @@ const App: React.FC = () => {
         });
         await dbService.updateUserStatus(user.uid, 'break');
     }
+  };
+
+  const handleManualEnd = async () => {
+      if (!timerIsActive || !user) return;
+      const elapsedSeconds = timerTotalTime - timerTimeLeft;
+      
+      setTimerIsActive(false);
+      localStorage.removeItem('nexus_timer_active');
+      localStorage.removeItem('nexus_timer_end');
+      
+      if (timerMode === 'focus' && elapsedSeconds > 10) {
+          await dbService.logSession({
+              id: crypto.randomUUID(),
+              userId: user.uid,
+              subject: timerSubject,
+              duration: elapsedSeconds,
+              timestamp: Date.now(),
+              date: new Date().toISOString().split('T')[0]
+          });
+          await dbService.logActivity({
+              userId: user.uid,
+              userName: user.name,
+              type: 'session_completed',
+              subject: timerSubject,
+              duration: elapsedSeconds
+          });
+      }
+      await dbService.updateUserStatus(user.uid, 'online');
+      playFeedbackSound('stop');
   };
 
   const handleStartTimer = (duration: number, mode: string, subject: string) => {
@@ -261,6 +285,13 @@ const App: React.FC = () => {
     await dbService.updateUserProfile(user.uid, { avatar: url });
   };
 
+  const handleUpdateDailyGoal = async (minutes: number) => {
+    if (!user) return;
+    const updatedUser = { ...user, dailyGoalMinutes: minutes };
+    setUser(updatedUser);
+    await dbService.updateUserProfile(user.uid, { dailyGoalMinutes: minutes });
+  };
+
   if (isLoading) {
      return (
         <div className="flex h-screen w-screen items-center justify-center bg-black text-white">
@@ -298,6 +329,7 @@ const App: React.FC = () => {
             start: handleStartTimer,
             stop: handleStopTimer,
             reset: handleResetTimer,
+            manualEnd: handleManualEnd,
             setMode: setTimerMode,
             setSubject: setTimerSubject
           }} 
@@ -310,7 +342,6 @@ const App: React.FC = () => {
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in p-8 pb-32 overflow-y-auto h-full custom-scrollbar">
               <h2 className="text-3xl font-bold text-white tracking-tight">System Configuration</h2>
               
-              {/* Profile Section */}
               <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-8 backdrop-blur-sm">
                   <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
@@ -361,7 +392,38 @@ const App: React.FC = () => {
                   </div>
               </div>
 
-              {/* Atmosphere Section */}
+              <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-6 backdrop-blur-sm">
+                  <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                          <Target className="w-6 h-6 text-emerald-400" />
+                      </div>
+                      <div>
+                          <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Productivity Goals</h3>
+                          <p className="text-xs text-zinc-500">Adjust your daily study expectations.</p>
+                      </div>
+                  </div>
+
+                  <div className="flex items-center gap-6">
+                      <div className="flex-1">
+                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3">Daily Study Goal (Minutes)</label>
+                          <div className="flex items-center gap-4">
+                              <input 
+                                type="range" 
+                                min="30" 
+                                max="600" 
+                                step="15"
+                                value={user.dailyGoalMinutes || 120}
+                                onChange={(e) => handleUpdateDailyGoal(parseInt(e.target.value))}
+                                className="flex-1 h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                              />
+                              <div className="w-20 text-center py-2 bg-black border border-white/5 rounded-xl text-white font-mono font-bold text-sm">
+                                  {user.dailyGoalMinutes || 120}m
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
               <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-6 backdrop-blur-sm">
                   <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
@@ -413,7 +475,6 @@ const App: React.FC = () => {
     <div className={`flex h-screen overflow-hidden bg-black text-zinc-100 font-sans transition-all duration-1000`}>
       <div className={`fixed inset-0 bg-gradient-to-tr ${atmosphereColors[atmosphere as keyof typeof atmosphereColors]} pointer-events-none opacity-50 z-0`} />
       
-      {/* GLOBAL ALARM TOAST */}
       {showAlarmToast && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[1000] animate-slide-up">
             <div className="bg-indigo-600 text-white px-8 py-4 rounded-2xl shadow-[0_0_50px_rgba(99,102,241,0.5)] border border-indigo-400 flex items-center gap-6">

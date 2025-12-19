@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Brain, Plus, X, Volume2, VolumeX, Settings2, Check } from 'lucide-react';
+import { Play, Pause, RotateCcw, Brain, Plus, X, Volume2, VolumeX, Settings2, Check, FastForward } from 'lucide-react';
 import { UserProfile } from '../types.ts';
 import { dbService } from '../services/dbService.ts';
 
@@ -19,6 +19,7 @@ interface FocusTimerProps {
     start: (duration: number, mode: string, subject: string) => void;
     stop: () => void;
     reset: (duration: number) => void;
+    manualEnd: () => void;
     setMode: (mode: 'focus' | 'short' | 'long') => void;
     setSubject: (sub: string) => void;
   };
@@ -36,7 +37,6 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
   
   const [editSettings, setEditSettings] = useState(settings);
 
-  // Sync settings whenever they change
   useEffect(() => {
     localStorage.setItem('nexus_timer_settings', JSON.stringify(settings));
   }, [settings]);
@@ -75,7 +75,6 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
     e.preventDefault();
     setSettings(editSettings);
     setShowConfig(false);
-    // If not currently running, update the timer display immediately
     if (!globalTimer.isActive) {
       globalTimer.reset(editSettings[globalTimer.mode] * 60);
     }
@@ -214,13 +213,22 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
             </div>
         </div>
 
-        <div className="flex gap-8 shrink-0">
-            <button onClick={toggleTimer} className="w-20 h-20 rounded-full bg-white text-black flex items-center justify-center shadow-2xl active:scale-90 transition-transform">
-                {globalTimer.isActive ? <Pause className="w-8 h-8 fill-black" /> : <Play className="w-8 h-8 fill-black ml-1" />}
+        <div className="flex items-center gap-8 shrink-0">
+            <button onClick={handleReset} className="w-16 h-16 rounded-full bg-zinc-900 border border-white/5 text-zinc-500 flex items-center justify-center hover:text-white transition-colors active:scale-90" title="Reset Session">
+                <RotateCcw className="w-5 h-5" />
             </button>
-            <button onClick={handleReset} className="w-20 h-20 rounded-full bg-zinc-900 border border-white/5 text-zinc-500 flex items-center justify-center hover:text-white transition-colors">
-                <RotateCcw className="w-6 h-6" />
+            <button onClick={toggleTimer} className="w-24 h-24 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.2)] active:scale-90 transition-transform">
+                {globalTimer.isActive ? <Pause className="w-10 h-10 fill-black" /> : <Play className="w-10 h-10 fill-black ml-1" />}
             </button>
+            {globalTimer.isActive && (
+                <button 
+                  onClick={() => globalTimer.manualEnd()} 
+                  className="w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center hover:bg-indigo-500 hover:text-white transition-all active:scale-90 group"
+                  title="Finish and Save Progress"
+                >
+                    <FastForward className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+            )}
         </div>
       </div>
 
