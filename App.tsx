@@ -207,29 +207,43 @@ const App: React.FC = () => {
 
   const handleManualEnd = async () => {
       if (!timerIsActive || !user) return;
-      const elapsedSeconds = timerTotalTime - timerTimeLeft;
       
+      // Stop timer and clear storage first for immediate UI response
       setTimerIsActive(false);
       localStorage.removeItem('nexus_timer_active');
       localStorage.removeItem('nexus_timer_end');
       
-      if (timerMode === 'focus' && elapsedSeconds > 10) {
-          await dbService.logSession({
-              id: crypto.randomUUID(),
-              userId: user.uid,
-              subject: timerSubject,
-              duration: elapsedSeconds,
-              timestamp: Date.now(),
-              date: new Date().toISOString().split('T')[0]
-          });
-          await dbService.logActivity({
-              userId: user.uid,
-              userName: user.name,
-              type: 'session_completed',
-              subject: timerSubject,
-              duration: elapsedSeconds
-          });
+      const elapsedSeconds = Math.max(0, timerTotalTime - timerTimeLeft);
+      
+      // Save data if session was meaningful (more than 1 second)
+      if (timerMode === 'focus' && elapsedSeconds > 1) {
+          try {
+              await dbService.logSession({
+                  id: crypto.randomUUID(),
+                  userId: user.uid,
+                  subject: timerSubject,
+                  duration: elapsedSeconds,
+                  timestamp: Date.now(),
+                  date: new Date().toISOString().split('T')[0]
+              });
+              await dbService.logActivity({
+                  userId: user.uid,
+                  userName: user.name,
+                  type: 'session_completed',
+                  subject: timerSubject,
+                  duration: elapsedSeconds
+              });
+          } catch (err) {
+              console.error("Failed to save manual session:", err);
+          }
       }
+      
+      // Reset timer to full duration for current mode
+      const settings = JSON.parse(localStorage.getItem('nexus_timer_settings') || '{"focus": 25, "short": 5, "long": 15}');
+      const resetDuration = settings[timerMode] * 60;
+      setTimerTimeLeft(resetDuration);
+      setTimerTotalTime(resetDuration);
+      
       await dbService.updateUserStatus(user.uid, 'online');
       playFeedbackSound('stop');
   };
