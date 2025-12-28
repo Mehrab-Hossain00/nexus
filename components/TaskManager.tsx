@@ -148,7 +148,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
             </div>
             <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl transition-all shadow-lg"
+            className="flex items-center gap-2 px-6 py-2.5 bg-nexus-electric hover:bg-nexus-violet text-white font-semibold rounded-xl transition-all shadow-lg active:scale-95"
             >
             <Plus className="w-4 h-4" />
             <span>New Task</span>
@@ -158,13 +158,13 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
         <div className="flex flex-col gap-4">
             <div className="flex flex-col md:flex-row gap-4">
                 <div className="relative flex-1 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-indigo-400 transition-colors" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-nexus-electric transition-colors" />
                     <input 
                         type="text" 
                         placeholder="Search tasks..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-zinc-900/30 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-all"
+                        className="w-full bg-zinc-900/30 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-nexus-electric/50 transition-all"
                     />
                 </div>
                 <div className="flex bg-zinc-900/30 border border-white/5 rounded-xl p-1 gap-1">
@@ -189,7 +189,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
         <div className="grid grid-cols-1 gap-3 relative min-h-[200px]">
             {isLoading && (
                 <div className="absolute inset-0 flex items-start justify-center pt-20 bg-black/50 z-10 backdrop-blur-sm rounded-xl">
-                    <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                    <Loader2 className="w-8 h-8 animate-spin text-nexus-electric" />
                 </div>
             )}
             
@@ -200,7 +200,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
                 group flex items-center gap-5 p-5 rounded-2xl border transition-all duration-300 animate-fade-in
                 ${task.status === TaskStatus.DONE 
                     ? 'bg-zinc-900/10 border-white/5 opacity-50' 
-                    : 'bg-zinc-900/30 border-white/5 hover:border-indigo-500/30 hover:bg-zinc-900/50'}
+                    : 'bg-zinc-900/30 border-white/5 hover:border-nexus-electric/30 hover:bg-zinc-900/50'}
                 `}
             >
                 <button 
@@ -209,7 +209,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
                         w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-300 active:scale-90
                         ${task.status === TaskStatus.DONE 
                             ? 'bg-emerald-500 border-emerald-500 text-black' 
-                            : 'border-zinc-600 hover:border-indigo-400 text-transparent'}
+                            : 'border-zinc-600 hover:border-nexus-electric text-transparent'}
                     `}
                 >
                 <Check className="w-3.5 h-3.5" strokeWidth={3} />
@@ -219,7 +219,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
                     <h3 className={`font-medium text-base text-white truncate transition-all ${task.status === TaskStatus.DONE ? 'line-through text-zinc-500' : ''}`}>{task.title}</h3>
                     <div className="flex items-center gap-4 text-xs text-zinc-500 mt-1">
                         <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/5">
-                            <Tag className="w-3 h-3 text-indigo-400" /> {task.subject}
+                            <Tag className="w-3 h-3 text-nexus-electric" /> {task.subject}
                         </span>
                         {task.dueDate && (
                             <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {formatDueDate(task.dueDate)}</span>
@@ -253,21 +253,21 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-md bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500" />
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-nexus-electric to-nexus-violet" />
             <h2 className="text-2xl font-bold text-white mb-6">Create Task</h2>
             <form onSubmit={addTask} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Title</label>
-                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all" placeholder="e.g. Study for Finals" />
+                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Study for Finals" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Subject</label>
-                  <input name="subject" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all" placeholder="e.g. Math" />
+                  <input name="subject" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Math" />
                 </div>
                 <div>
                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Priority</label>
-                   <select name="priority" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all appearance-none">
+                   <select name="priority" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none">
                      <option value={TaskPriority.HIGH}>High Priority</option>
                      <option value={TaskPriority.MEDIUM}>Medium Priority</option>
                      <option value={TaskPriority.LOW}>Low Priority</option>
@@ -278,12 +278,12 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
               <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Due Date</label>
-                    <input name="dueDate" type="datetime-local" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all [color-scheme:dark]" />
+                    <input name="dueDate" type="datetime-local" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all [color-scheme:dark]" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Reminder</label>
                     <div className="relative">
-                        <select name="reminderOffset" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all appearance-none">
+                        <select name="reminderOffset" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none">
                             {REMINDER_OPTIONS.map(opt => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
@@ -295,7 +295,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
 
               <div className="flex justify-end gap-3 mt-8">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-zinc-400 hover:text-white font-medium transition-colors hover:bg-white/5 rounded-xl">Cancel</button>
-                <button type="submit" className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-95">Create Task</button>
+                <button type="submit" className="px-6 py-2.5 bg-nexus-electric text-white font-bold rounded-xl transition-all shadow-lg shadow-nexus-electric/20 active:scale-95">Create Task</button>
               </div>
             </form>
           </div>

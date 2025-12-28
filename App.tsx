@@ -9,10 +9,11 @@ import { AITutor } from './components/AITutor.tsx';
 import { Analytics } from './components/Analytics.tsx';
 import { Groups } from './components/Groups.tsx';
 import { Login } from './components/Login.tsx';
+import { CommandPalette } from './components/CommandPalette.tsx';
 import { authService } from './services/authService.ts';
 import { dbService } from './services/dbService.ts';
-import { AppView, UserProfile } from './types.ts';
-import { BellRing, X, User as UserIcon, Check, Sparkles, Target } from 'lucide-react';
+import { AppView, UserProfile, AppTheme } from './types.ts';
+import { BellRing, X, User as UserIcon, Check, Sparkles, Target, Palette, Moon, Sun, Monitor, Zap } from 'lucide-react';
 
 const DEFAULT_SUBJECTS = ["Math", "Physics", "Chemistry", "Biology"];
 
@@ -31,11 +32,23 @@ const AVATAR_PRESETS = [
   { style: 'pixel-art', seed: 'Quest' },
 ];
 
+const THEMES: { id: AppTheme; name: string; description: string; colors: string[] }[] = [
+  { id: 'default', name: 'Nexus Core', description: 'Deep Black & Electric Violet', colors: ['#000000', '#7C3AED'] },
+  { id: 'midnight', name: 'Midnight', description: 'Deep Black & Royal Blue', colors: ['#000000', '#2563eb'] },
+  { id: 'blackout', name: 'Blackout', description: 'Pure Black & White', colors: ['#000000', '#ffffff'] },
+  { id: 'cyberpunk', name: 'Neon Protocol', description: 'Deep Black & Magenta', colors: ['#000000', '#d946ef'] },
+  { id: 'oceanic', name: 'Oceanic', description: 'Deep Black & Cyan', colors: ['#000000', '#06b6d4'] },
+  { id: 'sunset', name: 'Sunset', description: 'Deep Black & Amber', colors: ['#000000', '#f59e0b'] },
+  { id: 'forest', name: 'Forest', description: 'Deep Black & Emerald', colors: ['#000000', '#10b981'] },
+  { id: 'crimson', name: 'Crimson', description: 'Deep Black & Red', colors: ['#000000', '#ef4444'] },
+];
+
 const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [currentView, setCurrentView] = useState<AppView>(AppView.DASHBOARD);
   const [isLoading, setIsLoading] = useState(true);
-  const [atmosphere, setAtmosphere] = useState('indigo');
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<AppTheme>('default');
 
   const [subjects, setSubjects] = useState<string[]>(() => {
     const saved = localStorage.getItem('nexus_subjects');
@@ -60,6 +73,17 @@ const App: React.FC = () => {
   const timerIntervalRef = useRef<any>(null);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem('nexus_subjects', JSON.stringify(subjects));
   }, [subjects]);
 
@@ -77,6 +101,10 @@ const App: React.FC = () => {
         const savedUser = await authService.restoreSession();
         if (savedUser) {
           setUser(savedUser);
+          if (savedUser.theme) {
+            setCurrentTheme(savedUser.theme);
+            document.body.setAttribute('data-theme', savedUser.theme);
+          }
           await dbService.updateUserStatus(savedUser.uid, 'online');
         }
       } finally {
@@ -208,14 +236,12 @@ const App: React.FC = () => {
   const handleManualEnd = async () => {
       if (!timerIsActive || !user) return;
       
-      // Stop timer and clear storage first for immediate UI response
       setTimerIsActive(false);
       localStorage.removeItem('nexus_timer_active');
       localStorage.removeItem('nexus_timer_end');
       
       const elapsedSeconds = Math.max(0, timerTotalTime - timerTimeLeft);
       
-      // Save data if session was meaningful (more than 1 second)
       if (timerMode === 'focus' && elapsedSeconds > 1) {
           try {
               await dbService.logSession({
@@ -238,7 +264,6 @@ const App: React.FC = () => {
           }
       }
       
-      // Reset timer to full duration for current mode
       const settings = JSON.parse(localStorage.getItem('nexus_timer_settings') || '{"focus": 25, "short": 5, "long": 15}');
       const resetDuration = settings[timerMode] * 60;
       setTimerTimeLeft(resetDuration);
@@ -282,6 +307,10 @@ const App: React.FC = () => {
 
   const handleLogin = (newUser: UserProfile) => {
     setUser(newUser);
+    if (newUser.theme) {
+      setCurrentTheme(newUser.theme);
+      document.body.setAttribute('data-theme', newUser.theme);
+    }
     setCurrentView(AppView.DASHBOARD);
     dbService.updateUserStatus(newUser.uid, 'online');
   };
@@ -299,17 +328,19 @@ const App: React.FC = () => {
     await dbService.updateUserProfile(user.uid, { avatar: url });
   };
 
-  const handleUpdateDailyGoal = async (minutes: number) => {
+  const handleUpdateTheme = async (theme: AppTheme) => {
     if (!user) return;
-    const updatedUser = { ...user, dailyGoalMinutes: minutes };
+    setCurrentTheme(theme);
+    document.body.setAttribute('data-theme', theme);
+    const updatedUser = { ...user, theme };
     setUser(updatedUser);
-    await dbService.updateUserProfile(user.uid, { dailyGoalMinutes: minutes });
+    await dbService.updateUserProfile(user.uid, { theme });
   };
 
   if (isLoading) {
      return (
-        <div className="flex h-screen w-screen items-center justify-center bg-black text-white">
-           <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex h-screen w-screen items-center justify-center bg-nexus-black text-white">
+           <div className="w-12 h-12 border-4 border-nexus-electric border-t-transparent rounded-full animate-spin" />
         </div>
      );
   }
@@ -354,12 +385,15 @@ const App: React.FC = () => {
       case AppView.ANALYTICS: return <Analytics user={user} />;
       case AppView.SETTINGS: return (
           <div className="max-w-4xl mx-auto space-y-8 animate-fade-in p-8 pb-32 overflow-y-auto h-full custom-scrollbar">
-              <h2 className="text-3xl font-bold text-white tracking-tight">System Configuration</h2>
+              <header>
+                  <h2 className="text-3xl font-bold text-white tracking-tight">System Configuration</h2>
+                  <p className="text-zinc-500 text-sm mt-1">Manage your identity and visual experience.</p>
+              </header>
               
               <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-8 backdrop-blur-sm">
                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-                          <UserIcon className="w-6 h-6 text-indigo-400" />
+                      <div className="w-12 h-12 rounded-2xl bg-nexus-electric/10 border border-nexus-electric/20 flex items-center justify-center">
+                          <UserIcon className="w-6 h-6 text-nexus-electric" />
                       </div>
                       <div>
                           <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Identity Presence</h3>
@@ -375,11 +409,11 @@ const App: React.FC = () => {
                               <button 
                                 key={idx}
                                 onClick={() => handleUpdateAvatar(url)}
-                                className={`relative aspect-square rounded-2xl border-2 transition-all p-1 group ${isActive ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_20px_rgba(99,102,241,0.3)]' : 'border-white/5 bg-black/40 hover:border-white/20'}`}
+                                className={`relative aspect-square rounded-2xl border-2 transition-all p-1 group ${isActive ? 'border-nexus-electric bg-nexus-electric/10 shadow-[0_0_20px_rgba(var(--nexus-accent-rgb),0.3)]' : 'border-white/5 bg-black/40 hover:border-white/20'}`}
                               >
                                   <img src={url} className="w-full h-full rounded-xl transition-transform group-hover:scale-110" alt="Avatar option" />
                                   {isActive && (
-                                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-500 rounded-full flex items-center justify-center border-4 border-black animate-scale-in shadow-xl">
+                                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-nexus-electric rounded-full flex items-center justify-center border-4 border-black animate-scale-in shadow-xl">
                                           <Check className="w-3 h-3 text-white stroke-[4px]" />
                                       </div>
                                   )}
@@ -387,89 +421,50 @@ const App: React.FC = () => {
                           );
                       })}
                   </div>
-                  
-                  <div className="p-6 bg-indigo-500/5 rounded-2xl border border-indigo-500/10 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                          <img src={user.avatar} className="w-16 h-16 rounded-2xl bg-black border border-white/10" alt="Current Avatar" />
-                          <div>
-                              <p className="text-white font-bold">{user.name}</p>
-                              <p className="text-xs text-zinc-500">Nexus Citizen v1.0.4</p>
-                          </div>
-                      </div>
-                      <div className="text-right">
-                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Status</p>
-                          <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                              <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Verified</span>
-                          </div>
-                      </div>
-                  </div>
               </div>
 
-              <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-6 backdrop-blur-sm">
+              <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-8 backdrop-blur-sm">
                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                          <Target className="w-6 h-6 text-emerald-400" />
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                          <Palette className="w-6 h-6 text-indigo-400" />
                       </div>
                       <div>
-                          <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Productivity Goals</h3>
-                          <p className="text-xs text-zinc-500">Adjust your daily study expectations.</p>
+                          <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Visual Experience</h3>
+                          <p className="text-xs text-zinc-500">Minimal black foundation with vibrant accents.</p>
                       </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                      <div className="flex-1">
-                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] mb-3">Daily Study Goal (Minutes)</label>
-                          <div className="flex items-center gap-4">
-                              <input 
-                                type="range" 
-                                min="30" 
-                                max="600" 
-                                step="15"
-                                value={user.dailyGoalMinutes || 120}
-                                onChange={(e) => handleUpdateDailyGoal(parseInt(e.target.value))}
-                                className="flex-1 h-1.5 bg-zinc-800 rounded-full appearance-none cursor-pointer accent-indigo-500"
-                              />
-                              <div className="w-20 text-center py-2 bg-black border border-white/5 rounded-xl text-white font-mono font-bold text-sm">
-                                  {user.dailyGoalMinutes || 120}m
-                              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {THEMES.map((theme) => {
+                      const isActive = currentTheme === theme.id;
+                      return (
+                        <button
+                          key={theme.id}
+                          onClick={() => handleUpdateTheme(theme.id)}
+                          className={`
+                            p-5 rounded-2xl border transition-all text-left flex flex-col gap-4 group relative overflow-hidden
+                            ${isActive ? 'bg-nexus-electric/10 border-nexus-electric shadow-lg' : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-zinc-800/40'}
+                          `}
+                        >
+                          <div className="flex justify-between items-center relative z-10">
+                            <div className="w-10 h-10 rounded-xl bg-black border border-white/10 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
+                                <Zap className="w-5 h-5" style={{ color: theme.colors[1] }} />
+                            </div>
+                            {isActive && <Check className="w-4 h-4 text-nexus-electric" />}
                           </div>
-                      </div>
-                  </div>
-              </div>
-
-              <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-6 backdrop-blur-sm">
-                  <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                          <Sparkles className="w-6 h-6 text-purple-400" />
-                      </div>
-                      <div>
-                          <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Interface Atmosphere</h3>
-                          <p className="text-xs text-zinc-500">Tailor the visual depth of your workspace.</p>
-                      </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {['indigo', 'sunset', 'ocean', 'space'].map(a => (
-                          <button 
-                            key={a} 
-                            onClick={() => setAtmosphere(a)}
-                            className={`group relative h-28 rounded-2xl border-2 transition-all overflow-hidden ${atmosphere === a ? 'border-white shadow-[0_0_30px_rgba(255,255,255,0.1)]' : 'border-transparent hover:border-white/10'} ${
-                                a === 'indigo' ? 'bg-gradient-to-br from-indigo-900 to-black' :
-                                a === 'sunset' ? 'bg-gradient-to-br from-rose-900 to-black' :
-                                a === 'ocean' ? 'bg-gradient-to-br from-cyan-900 to-black' :
-                                'bg-gradient-to-br from-zinc-900 to-black'
-                            }`}
-                          >
-                             <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity bg-white" />
-                             <span className="absolute bottom-4 left-4 text-[10px] font-bold text-white uppercase tracking-[0.2em]">{a}</span>
-                             {atmosphere === a && (
-                                <div className="absolute top-4 right-4 w-5 h-5 bg-white rounded-full flex items-center justify-center">
-                                    <Check className="w-3 h-3 text-black stroke-[3px]" />
-                                </div>
-                             )}
-                          </button>
-                      ))}
+                          <div className="relative z-10">
+                            <p className="text-sm font-bold text-white">{theme.name}</p>
+                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{theme.description}</p>
+                          </div>
+                          <div 
+                            className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br transition-opacity opacity-5" 
+                            style={{ 
+                              backgroundImage: `linear-gradient(to bottom right, ${theme.colors[1]}, transparent)` 
+                            }} 
+                          />
+                        </button>
+                      );
+                    })}
                   </div>
               </div>
           </div>
@@ -478,32 +473,35 @@ const App: React.FC = () => {
     }
   };
 
-  const atmosphereColors = {
-      indigo: 'from-indigo-600/10 via-black to-black',
-      sunset: 'from-rose-600/10 via-black to-black',
-      ocean: 'from-cyan-600/10 via-black to-black',
-      space: 'from-zinc-600/10 via-black to-black'
-  };
-
   return (
-    <div className={`flex h-screen overflow-hidden bg-black text-zinc-100 font-sans transition-all duration-1000`}>
-      <div className={`fixed inset-0 bg-gradient-to-tr ${atmosphereColors[atmosphere as keyof typeof atmosphereColors]} pointer-events-none opacity-50 z-0`} />
+    <div className={`flex h-screen overflow-hidden bg-nexus-black text-zinc-100 font-sans transition-all duration-1000`}>
+      <div className={`fixed inset-0 bg-gradient-to-tr from-nexus-electric/10 via-nexus-black to-nexus-black pointer-events-none opacity-60 z-0 transition-colors duration-1000`} />
       
+      {isCommandPaletteOpen && (
+        <CommandPalette 
+          onClose={() => setIsCommandPaletteOpen(false)} 
+          onNavigate={(v) => {
+            setCurrentView(v);
+            setIsCommandPaletteOpen(false);
+          }}
+        />
+      )}
+
       {showAlarmToast && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[1000] animate-slide-up">
-            <div className="bg-indigo-600 text-white px-8 py-4 rounded-2xl shadow-[0_0_50px_rgba(99,102,241,0.5)] border border-indigo-400 flex items-center gap-6">
+            <div className="bg-nexus-electric text-white px-8 py-4 rounded-2xl shadow-[0_0_50px_rgba(var(--nexus-accent-rgb),0.5)] border border-nexus-violet/50 flex items-center gap-6">
                 <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center animate-bounce">
                     <BellRing className="w-6 h-6" />
                 </div>
                 <div>
-                    <h4 className="font-bold text-lg leading-tight">Session Complete</h4>
+                    <h4 className="font-bold text-lg leading-tight text-white">Session Complete</h4>
                     <p className="text-white/70 text-sm">Time for a well-deserved break.</p>
                 </div>
                 <button 
                     onClick={() => setShowAlarmToast(false)}
                     className="p-2 hover:bg-white/10 rounded-full transition-colors"
                 >
-                    <X className="w-5 h-5" />
+                    <X className="w-5 h-5 text-white" />
                 </button>
             </div>
         </div>

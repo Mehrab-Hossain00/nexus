@@ -3,10 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus Study Pro</title>
+    <title>Nexus Study Pro | Premium Academic Suite</title>
     <link rel="icon" type="image/svg+xml" href="./logo.svg" />
     <script>
-      // Shim process.env to prevent "process is not defined" runtime crashes in browser
       window.process = window.process || {};
       window.process.env = window.process.env || {};
     </script>
@@ -25,22 +24,28 @@
             },
             colors: {
               nexus: {
-                black: '#000000',
-                card: '#09090b',
-                border: '#27272a',
-                indigo: '#6366f1'
+                black: 'var(--nexus-bg)',
+                card: 'var(--nexus-card)',
+                border: 'var(--nexus-border)',
+                violet: 'var(--nexus-accent-alt)',
+                electric: 'var(--nexus-accent)',
+                slate: '#94A3B8'
               }
             },
             animation: {
-              'fade-in': 'fadeIn 0.4s ease-out forwards',
-              'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              'glow': 'glow 3s ease-in-out infinite alternate',
             },
             keyframes: {
               fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
               slideUp: {
-                '0%': { opacity: '0', transform: 'translateY(12px)' },
+                '0%': { opacity: '0', transform: 'translateY(20px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              glow: {
+                '0%': { boxShadow: '0 0 10px rgba(var(--nexus-accent-rgb), 0.1)' },
+                '100%': { boxShadow: '0 0 25px rgba(var(--nexus-accent-rgb), 0.3)' }
               }
             }
           }
@@ -48,24 +53,103 @@
       }
     </script>
     <style>
+      :root {
+        --nexus-bg: #000000;
+        --nexus-accent: #7C3AED;
+        --nexus-accent-alt: #8B5CF6;
+        --nexus-card: #0A0A0A;
+        --nexus-border: rgba(255, 255, 255, 0.08);
+      }
+
+      [data-theme='midnight'] {
+        --nexus-accent: #3b82f6;
+        --nexus-accent-alt: #60a5fa;
+        --nexus-card: #050810;
+      }
+
+      [data-theme='blackout'] {
+        --nexus-accent: #ffffff;
+        --nexus-accent-alt: #e2e8f0;
+        --nexus-card: #080808;
+        --nexus-border: rgba(255, 255, 255, 0.15);
+      }
+
+      [data-theme='cyberpunk'] {
+        --nexus-accent: #d946ef;
+        --nexus-accent-alt: #f472b6;
+        --nexus-card: #0a050d;
+        --nexus-border: rgba(217, 70, 239, 0.15);
+      }
+
+      [data-theme='oceanic'] {
+        --nexus-accent: #06b6d4;
+        --nexus-accent-alt: #22d3ee;
+        --nexus-card: #020a0c;
+        --nexus-border: rgba(6, 182, 212, 0.15);
+      }
+
+      [data-theme='sunset'] {
+        --nexus-accent: #f59e0b;
+        --nexus-accent-alt: #fbbf24;
+        --nexus-card: #0a0802;
+        --nexus-border: rgba(245, 158, 11, 0.15);
+      }
+
+      [data-theme='forest'] {
+        --nexus-accent: #10b981;
+        --nexus-accent-alt: #34d399;
+        --nexus-card: #020c08;
+        --nexus-border: rgba(16, 185, 129, 0.15);
+      }
+
+      [data-theme='crimson'] {
+        --nexus-accent: #ef4444;
+        --nexus-accent-alt: #f87171;
+        --nexus-card: #0c0202;
+        --nexus-border: rgba(239, 68, 68, 0.15);
+      }
+
       body {
-        background-color: #000000;
+        background-color: var(--nexus-bg);
         color: #f4f4f5;
         font-family: 'Inter', sans-serif;
         -webkit-font-smoothing: antialiased;
+        transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
       }
       
-      ::selection { background: rgba(99, 102, 241, 0.2); color: #fff; }
+      ::selection { background: var(--nexus-accent); color: #fff; }
 
-      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar { width: 5px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
       .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
-      .prose pre { background: #09090b !important; border: 1px solid #27272a; }
-      .prose code { color: #818cf8 !important; font-family: 'JetBrains Mono', monospace; }
-      
-      .katex-display { margin: 1.5em 0; padding: 1em; background: rgba(255,255,255,0.03); border-radius: 12px; }
+      .glass {
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--nexus-border);
+      }
+
+      .glass-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--nexus-border);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .glass-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--nexus-accent);
+        transform: translateY(-4px) scale(1.01);
+      }
+
+      .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        grid-auto-rows: minmax(100px, auto);
+        gap: 1.5rem;
+      }
     </style>
   <script type="importmap">
 {

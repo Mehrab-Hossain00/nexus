@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -62,8 +61,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
       >
         <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
           <div className="flex items-center gap-3 mb-12 group cursor-default">
-            <div className="w-10 h-10 bg-black border border-white/10 rounded-xl flex items-center justify-center relative overflow-hidden group-hover:border-white/20 transition-all duration-300">
-               <div className="absolute top-0 right-0 w-3 h-3 bg-indigo-500 blur-[8px] rounded-full opacity-75" />
+            <div className="w-10 h-10 bg-black border border-white/10 rounded-xl flex items-center justify-center relative overflow-hidden group-hover:border-nexus-electric transition-all duration-300">
+               <div className="absolute top-0 right-0 w-3 h-3 bg-nexus-electric blur-[8px] rounded-full opacity-75" />
                <Sparkles className="w-5 h-5 text-white relative z-10" />
             </div>
             <div>
@@ -84,15 +83,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
                   className={`
                     w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden group
                     ${isActive 
-                      ? 'bg-gradient-to-r from-indigo-500/10 to-transparent border-l-2 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.1)]' 
+                      ? 'bg-gradient-to-r from-nexus-electric/10 to-transparent border-l-2 border-nexus-electric shadow-[0_0_20px_rgba(var(--nexus-accent-rgb),0.1)]' 
                       : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5 border-l-2 border-transparent'}
                   `}
                 >
-                  <item.icon className={`w-5 h-5 ${isActive ? 'text-indigo-400' : 'group-hover:text-zinc-300'}`} />
+                  <item.icon className={`w-5 h-5 ${isActive ? 'text-nexus-electric' : 'group-hover:text-zinc-300'}`} />
                   <span className={`relative z-10 flex-1 text-left ${isActive ? 'text-white' : ''}`}>{item.label}</span>
                   
                   {hasTimer && (
-                    <span className="relative z-10 px-2 py-0.5 rounded-md bg-indigo-500 text-[9px] font-bold text-white animate-pulse">
+                    <span className="relative z-10 px-2 py-0.5 rounded-md bg-nexus-electric text-[9px] font-bold text-white animate-pulse">
                         {activeTimerMins}m
                     </span>
                   )}
@@ -105,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
         <div className="p-6 border-t border-white/5 space-y-4">
           <div 
             onClick={() => handleNavClick(AppView.SETTINGS)}
-            className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all cursor-pointer group"
+            className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-nexus-electric/30 transition-all cursor-pointer group"
           >
               <img src={user.avatar} className="w-10 h-10 rounded-xl bg-black border border-white/10 group-hover:scale-105 transition-transform" alt="Your Avatar" />
               <div className="min-w-0">

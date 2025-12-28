@@ -330,7 +330,11 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
                      const dayEvents = events.filter(e => (e.date || toDateString(new Date())) === dateStr);
                      const isToday = dateStr === toDateString(new Date());
                      return (
-                         <div key={i} className={`aspect-square bg-zinc-900/30 rounded-lg border ${isToday ? 'border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.3)]' : 'border-white/5'} p-2 hover:bg-zinc-800/50 transition-all hover:scale-105 cursor-pointer relative group`}>
+                         <div 
+                           key={i} 
+                           onClick={() => { setSelectedDate(d); setViewMode('Day'); }}
+                           className={`aspect-square bg-zinc-900/30 rounded-lg border ${isToday ? 'border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.3)]' : 'border-white/5'} p-2 hover:bg-zinc-800/50 transition-all hover:scale-105 cursor-pointer relative group`}
+                         >
                              <div className={`text-xs font-bold ${isToday ? 'text-indigo-400' : 'text-zinc-500'}`}>{i + 1}</div>
                              {dayEvents.length > 0 && (
                                  <div className="mt-2 space-y-1">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Users, Plus, MessageSquare, 
@@ -44,8 +43,8 @@ export const TaskManagerManualEntry = ({ user, onAdd }: { user: UserProfile, onA
         <form onSubmit={handleAdd} className="space-y-4 p-6 bg-zinc-900/30 rounded-2xl border border-white/5 backdrop-blur-sm">
             <h3 className="text-sm font-bold text-white uppercase tracking-widest">Add History</h3>
             <div className="grid grid-cols-2 gap-4">
-                <input name="subject" placeholder="Subject" className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-indigo-500/50 transition-colors" required />
-                <input name="duration" type="number" placeholder="Minutes" className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-indigo-500/50 transition-colors" required />
+                <input name="subject" placeholder="Subject" className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-nexus-electric/50 transition-colors" required />
+                <input name="duration" type="number" placeholder="Minutes" className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-nexus-electric/50 transition-colors" required />
             </div>
             <button type="submit" className="w-full py-2 bg-white text-black font-bold rounded-xl text-xs active:scale-95 transition-transform hover:bg-zinc-100">Save Session</button>
         </form>
@@ -217,7 +216,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                       <div>
                           <h2 className="text-white font-bold tracking-tight flex items-center gap-2">
                               {activeGroup.name}
-                              <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-mono uppercase border border-indigo-500/20">{activeGroup.groupCode}</span>
+                              <span className="text-[10px] bg-nexus-electric/20 text-nexus-electric px-2 py-0.5 rounded-full font-mono uppercase border border-nexus-electric/20">{activeGroup.groupCode}</span>
                           </h2>
                           <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{groupMembers.length} Members Online</p>
                       </div>
@@ -228,7 +227,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                               <button 
                                 key={m.uid} 
                                 onClick={() => handleInspectMember(m)}
-                                className="w-8 h-8 rounded-full border-2 border-black bg-zinc-800 transition-transform hover:scale-110 hover:z-20 relative focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="w-8 h-8 rounded-full border-2 border-black bg-zinc-800 transition-transform hover:scale-110 hover:z-20 relative focus:outline-none focus:ring-2 focus:ring-nexus-electric"
                               >
                                   <img src={m.avatar} className="w-full h-full rounded-full" title={m.name} />
                               </button>
@@ -255,7 +254,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                   <div className={`
                                       px-4 py-2.5 rounded-2xl max-w-[80%] text-sm backdrop-blur-md border transition-all duration-300
                                       ${m.senderId === user.uid 
-                                          ? 'bg-indigo-600/20 text-white border-indigo-500/30 hover:border-indigo-500/50 hover:bg-indigo-600/30' 
+                                          ? 'bg-nexus-electric/20 text-white border-nexus-electric/30 hover:border-nexus-electric/50 hover:bg-nexus-electric/30' 
                                           : 'bg-white/5 text-zinc-200 border-white/10 hover:border-white/20 hover:bg-white/10'}
                                   `}>
                                       {m.text}
@@ -269,7 +268,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                             value={msgInput}
                             onChange={e => setMsgInput(e.target.value)}
                             placeholder="Type a message..." 
-                            className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-indigo-500/50 outline-none transition-all placeholder:text-zinc-600" 
+                            className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-nexus-electric/50 outline-none transition-all placeholder:text-zinc-600" 
                           />
                           <button 
                             type="submit" 
@@ -277,7 +276,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                             className={`
                                 p-3 rounded-xl transition-all active:scale-90 shadow-lg flex items-center justify-center
                                 ${msgInput.trim() 
-                                    ? 'bg-indigo-600 text-white hover:bg-indigo-500 hover:shadow-[0_0_20px_rgba(79,70,229,0.4)]' 
+                                    ? 'bg-nexus-electric text-white hover:bg-nexus-violet hover:shadow-[0_0_20px_rgba(var(--nexus-accent-rgb),0.4)]' 
                                     : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}
                             `}
                           >
@@ -298,12 +297,12 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                   >
                                       <div className="relative shrink-0 transition-transform group-hover:scale-105">
                                           <img src={m.avatar} className="w-10 h-10 rounded-lg bg-zinc-800 border border-white/5" />
-                                          <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-black transition-colors ${m.status === 'online' ? 'bg-emerald-500' : m.status === 'studying' ? 'bg-indigo-500' : m.status === 'break' ? 'bg-amber-500' : 'bg-zinc-600'}`} />
+                                          <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-black transition-colors ${m.status === 'online' ? 'bg-emerald-500' : m.status === 'studying' ? 'bg-nexus-electric' : m.status === 'break' ? 'bg-amber-500' : 'bg-zinc-600'}`} />
                                       </div>
                                       <div className="min-w-0 flex-1">
-                                          <p className="text-xs font-bold text-white truncate group-hover:text-indigo-400 transition-colors">{m.name}</p>
+                                          <p className="text-xs font-bold text-white truncate group-hover:text-nexus-electric transition-colors">{m.name}</p>
                                           {m.status === 'studying' ? (
-                                              <div className="flex items-center gap-1 mt-0.5 text-indigo-400 font-bold uppercase tracking-tighter text-[9px] animate-pulse">
+                                              <div className="flex items-center gap-1 mt-0.5 text-nexus-electric font-bold uppercase tracking-tighter text-[9px] animate-pulse">
                                                   <Brain className="w-2.5 h-2.5" />
                                                   <span className="truncate">Studying {m.currentSubject || 'General'}</span>
                                               </div>
@@ -328,8 +327,8 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                              <div>
                                 <h3 className="text-xl font-bold text-white">{inspectingMember.name}</h3>
                                 <div className="flex items-center justify-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${inspectingMember.status === 'studying' ? 'bg-indigo-500' : 'bg-zinc-500'}`} />
-                                    <p className="text-xs text-indigo-400 uppercase font-bold tracking-widest">{inspectingMember.status || 'offline'}</p>
+                                    <div className={`w-2 h-2 rounded-full ${inspectingMember.status === 'studying' ? 'bg-nexus-electric' : 'bg-zinc-500'}`} />
+                                    <p className="text-xs text-nexus-electric uppercase font-bold tracking-widest">{inspectingMember.status || 'offline'}</p>
                                 </div>
                              </div>
                           </div>
@@ -361,7 +360,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                               <div className="space-y-6 animate-slide-up border-t border-white/5 pt-6 mt-6">
                                   <div className="space-y-4">
                                       <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                                          <TrendingUp className="w-3 h-3 text-indigo-400" /> Subject Breakdown
+                                          <TrendingUp className="w-3 h-3 text-nexus-electric" /> Subject Breakdown
                                       </h4>
                                       <div className="space-y-3">
                                           {memberStats.subjectBreakdown.length > 0 ? memberStats.subjectBreakdown.map(sub => (
@@ -372,7 +371,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                                   </div>
                                                   <div className="h-1 bg-black/60 rounded-full overflow-hidden">
                                                       <div 
-                                                        className="h-full bg-indigo-500 rounded-full transition-all duration-1000" 
+                                                        className="h-full bg-nexus-electric rounded-full transition-all duration-1000" 
                                                         style={{ width: `${Math.min(100, (sub.mins / 120) * 100)}%` }} 
                                                       />
                                                   </div>
@@ -383,10 +382,10 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                       </div>
                                   </div>
                                   
-                                  <div className="p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
+                                  <div className="p-4 bg-nexus-electric/5 rounded-2xl border border-nexus-electric/10">
                                       <div className="flex items-center gap-3 mb-2">
-                                          <div className="p-1.5 bg-indigo-500/10 rounded-lg">
-                                              <Brain className="w-3.5 h-3.5 text-indigo-400" />
+                                          <div className="p-1.5 bg-nexus-electric/10 rounded-lg">
+                                              <Brain className="w-3.5 h-3.5 text-nexus-electric" />
                                           </div>
                                           <span className="text-xs font-bold text-white">Academic Health</span>
                                       </div>
@@ -432,7 +431,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                    onChange={e => setJoinCode(e.target.value)}
                    className="bg-transparent text-xs px-4 py-2 outline-none text-white w-28 uppercase font-mono placeholder:text-zinc-600" 
                 />
-                <button onClick={handleJoinByCode} className="px-4 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-500 active:scale-95 transition-all shadow-lg shadow-indigo-600/20">Join</button>
+                <button onClick={handleJoinByCode} className="px-4 py-1.5 bg-nexus-electric text-white text-xs font-bold rounded-lg hover:bg-nexus-violet active:scale-95 transition-all shadow-lg shadow-nexus-electric/20">Join</button>
             </div>
             <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 px-6 py-2.5 bg-white text-black font-bold rounded-xl active:scale-95 shadow-xl hover:bg-zinc-100 transition-all">
                 <Plus className="w-4 h-4" />
@@ -454,11 +453,11 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                 {userGroups.map(g => (
                     <div 
                         key={g.id}
-                        className="p-6 rounded-3xl bg-zinc-900/10 border border-white/5 text-left group hover:border-indigo-500/30 transition-all hover:bg-zinc-900/30 relative overflow-hidden backdrop-blur-sm"
+                        className="p-6 rounded-3xl bg-zinc-900/10 border border-white/5 text-left group hover:border-nexus-electric/30 transition-all hover:bg-zinc-900/30 relative overflow-hidden backdrop-blur-sm"
                     >
                         <div className="flex justify-between items-start mb-4 relative z-10">
                             <div className="w-12 h-12 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-                                <Users className="w-6 h-6 text-indigo-400" />
+                                <Users className="w-6 h-6 text-nexus-electric" />
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-[10px] text-zinc-500 font-mono bg-black/20 px-2 py-0.5 rounded border border-white/5">{g.groupCode}</span>
@@ -477,9 +476,9 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                             onClick={() => { setActiveGroup(g); setView('chat'); }}
                             className="block w-full text-left relative z-10 focus:outline-none"
                         >
-                            <h4 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-200 transition-colors">{g.name}</h4>
+                            <h4 className="text-lg font-bold text-white mb-2 group-hover:text-nexus-electric transition-colors">{g.name}</h4>
                             <p className="text-xs text-zinc-500 line-clamp-2 mb-4 leading-relaxed group-hover:text-zinc-400 transition-colors">{g.description}</p>
-                            <div className="flex items-center gap-2 text-[10px] font-bold text-indigo-400 uppercase tracking-widest group-hover:text-indigo-300">
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-nexus-electric uppercase tracking-widest group-hover:text-nexus-violet">
                                 <Activity className="w-3 h-3 animate-pulse" /> {g.members.length} Active Users
                             </div>
                         </button>
@@ -496,7 +495,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                 {publicGroups.map(g => (
                     <div key={g.id} className="p-6 rounded-3xl bg-zinc-900/10 border border-white/5 flex flex-col justify-between backdrop-blur-sm group hover:border-white/20 transition-all">
                         <div>
-                            <h4 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-200 transition-colors">{g.name}</h4>
+                            <h4 className="text-lg font-bold text-white mb-2 group-hover:text-nexus-electric transition-colors">{g.name}</h4>
                             <p className="text-xs text-zinc-500 line-clamp-3 mb-6 leading-relaxed">{g.description}</p>
                         </div>
                         <div className="flex items-center justify-between">
@@ -506,7 +505,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                     await dbService.joinGroupByCode(user.uid, g.groupCode);
                                     loadInitial();
                                 }}
-                                className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all active:scale-95 shadow-lg shadow-indigo-600/10"
+                                className="px-4 py-2 bg-nexus-electric/10 border border-nexus-electric/20 text-nexus-electric rounded-xl text-xs font-bold hover:bg-nexus-electric hover:text-white transition-all active:scale-95 shadow-lg shadow-nexus-electric/10"
                             >
                                 Join Now
                             </button>
@@ -520,20 +519,20 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
       {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
               <div className="w-full max-w-md bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 to-rose-500" />
+                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-nexus-electric to-rose-500" />
                   <h2 className="text-2xl font-bold text-white mb-6">New Study Group</h2>
                   <form onSubmit={handleCreateGroup} className="space-y-5">
                       <div>
                           <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Group Name</label>
-                          <input name="name" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all" />
+                          <input name="name" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" />
                       </div>
                       <div>
                           <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Description</label>
-                          <textarea name="desc" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none h-24 resize-none transition-all" />
+                          <textarea name="desc" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none h-24 resize-none transition-all" />
                       </div>
                       <div>
                           <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Privacy</label>
-                          <select name="visibility" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500/50 transition-all appearance-none cursor-pointer">
+                          <select name="visibility" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-nexus-electric/50 transition-all appearance-none cursor-pointer">
                               <option value="private">Private (Invite Only)</option>
                               <option value="public">Public (Open to All)</option>
                           </select>

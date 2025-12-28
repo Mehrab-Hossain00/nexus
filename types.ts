@@ -12,6 +12,8 @@ export enum AppView {
 
 export type UserStatus = 'online' | 'offline' | 'studying' | 'break';
 
+export type AppTheme = 'default' | 'midnight' | 'blackout' | 'cyberpunk' | 'oceanic' | 'sunset' | 'forest' | 'crimson';
+
 export interface UserProfile {
   uid: string;
   name: string;
@@ -22,6 +24,9 @@ export interface UserProfile {
   currentSubject?: string;
   dailyGoalMinutes?: number;
   lastActivity?: number;
+  xp?: number;
+  streak?: number;
+  theme?: AppTheme;
 }
 
 export enum TaskPriority {
@@ -74,8 +79,6 @@ export interface ChatSession {
   updatedAt: number;
   messages: ChatMessage[];
 }
-
-// --- NEW COLLABORATIVE TYPES ---
 
 export interface StudyGroup {
   id: string;

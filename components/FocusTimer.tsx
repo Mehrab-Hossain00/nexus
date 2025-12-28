@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Brain, Plus, X, Volume2, VolumeX, Settings2, Check, FastForward } from 'lucide-react';
 import { UserProfile } from '../types.ts';
@@ -149,7 +148,7 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
                             onClick={() => globalTimer.setSubject(s)}
                             className={`py-2.5 rounded-xl text-xs font-medium border transition-all flex items-center justify-center relative group
                               ${globalTimer.subject === s 
-                                ? 'bg-indigo-500/20 border-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.2)]' 
+                                ? 'bg-nexus-electric/20 border-nexus-electric text-white shadow-[0_0_15px_rgba(var(--nexus-accent-rgb),0.2)]' 
                                 : 'bg-zinc-900/40 border-white/5 text-zinc-500 hover:border-white/10'}`}
                         >
                             <span className="truncate px-2">{s}</span>
@@ -175,7 +174,7 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
                             else addSubject();
                           }}
                           placeholder="Name..."
-                          className="w-full py-2.5 bg-zinc-900/40 border border-indigo-500/50 rounded-xl text-xs text-white px-3 focus:outline-none focus:border-indigo-500"
+                          className="w-full py-2.5 bg-zinc-900/40 border border-nexus-electric/50 rounded-xl text-xs text-white px-3 focus:outline-none focus:border-nexus-electric"
                         />
                       </form>
                     ) : (
@@ -192,7 +191,7 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
         )}
 
         {globalTimer.isActive && globalTimer.mode === 'focus' && (
-            <div className="px-6 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-xs font-bold animate-pulse flex items-center gap-2">
+            <div className="px-6 py-2 bg-nexus-electric/10 border border-nexus-electric/20 rounded-full text-nexus-electric text-xs font-bold animate-pulse flex items-center gap-2">
                 <Brain className="w-3.5 h-3.5" />
                 Studying {globalTimer.subject}
             </div>
@@ -204,7 +203,8 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
                 <circle cx={size/2} cy={size/2} r={140} strokeWidth="8" stroke="currentColor" fill="transparent" 
                   strokeDasharray={2 * Math.PI * 140}
                   strokeDashoffset={2 * Math.PI * 140 * (1 - progress / 100)}
-                  className={`${globalTimer.mode === 'focus' ? 'text-indigo-500' : 'text-emerald-500'} transition-all duration-300 ease-out`}
+                  className={`${globalTimer.mode === 'focus' ? 'text-nexus-electric' : 'text-emerald-500'} transition-all duration-300 ease-out`}
+                  style={{ filter: 'drop-shadow(0 0 8px currentColor)' }}
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -223,7 +223,7 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
             {globalTimer.isActive && (
                 <button 
                   onClick={() => globalTimer.manualEnd()} 
-                  className="w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center hover:bg-indigo-500 hover:text-white transition-all active:scale-90 group"
+                  className="w-16 h-16 rounded-full bg-nexus-electric/10 border border-nexus-electric/20 text-nexus-electric flex items-center justify-center hover:bg-nexus-electric hover:text-white transition-all active:scale-90 group"
                   title="Finish and Save Progress"
                 >
                     <FastForward className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
@@ -235,10 +235,10 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
       {showConfig && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-sm bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 to-emerald-500" />
+             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-nexus-electric to-emerald-500" />
              <div className="flex justify-between items-center mb-8">
                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <Settings2 className="w-5 h-5 text-indigo-400" />
+                    <Settings2 className="w-5 h-5 text-nexus-electric" />
                     Interval Config
                  </h3>
                  <button onClick={() => setShowConfig(false)} className="text-zinc-500 hover:text-white transition-colors">
@@ -255,7 +255,7 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
                                 type="number" 
                                 value={editSettings.focus}
                                 onChange={e => setEditSettings({...editSettings, focus: parseInt(e.target.value) || 1})}
-                                className="w-16 bg-zinc-900 border border-white/10 rounded-lg px-2 py-1.5 text-center text-white focus:border-indigo-500 outline-none font-mono"
+                                className="w-16 bg-zinc-900 border border-white/10 rounded-lg px-2 py-1.5 text-center text-white focus:border-nexus-electric outline-none font-mono"
                             />
                             <span className="text-[10px] text-zinc-600 font-bold">MIN</span>
                         </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -226,12 +225,12 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
       >
         <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
           <h2 className="text-white font-bold tracking-tight flex items-center gap-2">
-             <MessageSquare className="w-4 h-4 text-indigo-400" />
+             <MessageSquare className="w-4 h-4 text-nexus-electric" />
              Chat History
           </h2>
           <button 
             onClick={handleNewChat}
-            className="p-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-lg transition-colors border border-indigo-500/20 active:scale-95"
+            className="p-2 bg-nexus-electric/10 hover:bg-nexus-electric/20 text-nexus-electric rounded-lg transition-colors border border-nexus-electric/20 active:scale-95"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -244,7 +243,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
               className={`
                 group relative p-3 rounded-xl cursor-pointer transition-all border
                 ${activeSessionId === session.id 
-                  ? 'bg-indigo-500/10 border-indigo-500/30 text-white' 
+                  ? 'bg-nexus-electric/10 border-nexus-electric/30 text-white' 
                   : 'border-transparent text-zinc-500 hover:bg-white/5 hover:text-zinc-300'}
               `}
             >
@@ -254,10 +253,10 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                     autoFocus
                     value={renamingTitle}
                     onChange={e => setRenamingTitle(e.target.value)}
-                    className="bg-zinc-800 border border-indigo-500 text-xs text-white px-2 py-1 rounded w-full outline-none"
+                    className="bg-zinc-800 border border-nexus-electric text-xs text-white px-2 py-1 rounded w-full outline-none"
                     onBlur={() => setRenamingSessionId(null)}
                   />
-                  <button type="submit" className="text-indigo-400 hover:text-indigo-200">
+                  <button type="submit" className="text-nexus-electric hover:text-white">
                     <Check className="w-3.5 h-3.5" />
                   </button>
                 </form>
@@ -270,7 +269,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={(e) => startRenaming(session, e)}
-                      className="p-1.5 text-zinc-500 hover:text-indigo-400 transition-all hover:bg-indigo-500/10 rounded-lg"
+                      className="p-1.5 text-zinc-500 hover:text-nexus-electric transition-all hover:bg-nexus-electric/10 rounded-lg"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
@@ -304,7 +303,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
               </button>
               <div>
                 <h2 className="text-white font-bold tracking-tight flex items-center gap-2">
-                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> : <Sparkles className="w-4 h-4 text-indigo-400" />}
+                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-nexus-electric" /> : <Sparkles className="w-4 h-4 text-nexus-electric" />}
                    {activeSessionId ? sessions.find(s => s.id === activeSessionId)?.title : 'AI Study Help'}
                 </h2>
                 <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Helpful AI Active • Gemini Pro</div>
@@ -315,8 +314,8 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
           {messages.length === 0 && !isLoading && (
             <div className="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto space-y-6">
-               <div className="w-20 h-20 bg-indigo-500/10 rounded-3xl flex items-center justify-center border border-indigo-500/20 shadow-[0_0_30px_rgba(99,102,241,0.1)]">
-                  <Sparkles className="w-10 h-10 text-indigo-400" />
+               <div className="w-20 h-20 bg-nexus-electric/10 rounded-3xl flex items-center justify-center border border-nexus-electric/20 shadow-[0_0_30px_rgba(var(--nexus-accent-rgb),0.1)]">
+                  <Sparkles className="w-10 h-10 text-nexus-electric" />
                </div>
                <div>
                   <h3 className="text-white font-bold text-xl mb-2">How can I help you?</h3>
@@ -331,14 +330,14 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                 max-w-[85%] md:max-w-[75%] rounded-2xl p-4 md:p-6
                 ${msg.role === 'user' 
                   ? 'bg-zinc-800/80 text-white border border-white/5 ml-12' 
-                  : msg.isError ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-indigo-500/5 text-zinc-100 border border-white/5 mr-12'}
+                  : msg.isError ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-nexus-electric/5 text-zinc-100 border border-white/5 mr-12'}
               `}>
                 {msg.role === 'model' && (
                   <div className="flex items-center gap-2 mb-4">
-                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${msg.isError ? 'border-rose-500/30 bg-rose-500/20 text-rose-400' : 'border-indigo-500/30 bg-indigo-500/10 text-indigo-400'}`}>
+                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${msg.isError ? 'border-rose-500/30 bg-rose-500/20 text-rose-400' : 'border-nexus-electric/30 bg-nexus-electric/10 text-nexus-electric'}`}>
                         {msg.isError ? <ShieldAlert className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                      </div>
-                     <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${msg.isError ? 'text-rose-400' : 'text-indigo-400'}`}>
+                     <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${msg.isError ? 'text-rose-400' : 'text-nexus-electric'}`}>
                         {msg.isError ? 'Alert' : 'AI Response'}
                      </span>
                   </div>
@@ -366,7 +365,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                             {String(children).replace(/\n$/, '')}
                           </SyntaxHighlighter>
                         ) : (
-                          <code className="bg-white/10 px-1.5 py-0.5 rounded text-indigo-300 font-mono text-xs" {...props}>
+                          <code className="bg-white/10 px-1.5 py-0.5 rounded text-nexus-electric font-mono text-xs" {...props}>
                             {children}
                           </code>
                         );
@@ -385,13 +384,13 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
         <div className="p-4 bg-black/40 backdrop-blur-xl border-t border-white/5 shrink-0">
           <form onSubmit={handleSend} className="max-w-4xl mx-auto">
             {imageFile && (
-              <div className="flex items-center gap-3 p-2 bg-indigo-500/10 border border-indigo-500/30 rounded-xl mb-3">
-                 <div className="w-12 h-12 rounded-lg bg-indigo-500/20 flex items-center justify-center overflow-hidden border border-indigo-500/30">
+              <div className="flex items-center gap-3 p-2 bg-nexus-electric/10 border border-nexus-electric/30 rounded-xl mb-3">
+                 <div className="w-12 h-12 rounded-lg bg-nexus-electric/20 flex items-center justify-center overflow-hidden border border-nexus-electric/30">
                     <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-full h-full object-cover" />
                  </div>
                  <div className="flex-1 overflow-hidden">
                     <div className="text-xs font-bold text-white truncate">{imageFile.name}</div>
-                    <div className="text-[10px] text-indigo-400 uppercase font-mono">Image Selected</div>
+                    <div className="text-[10px] text-nexus-electric uppercase font-mono">Image Selected</div>
                  </div>
                  <button onClick={() => setImageFile(null)} className="p-1.5 hover:bg-white/10 rounded-full text-zinc-500 hover:text-white transition-colors">
                     <X className="w-4 h-4" />
@@ -405,7 +404,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={imageFile ? "What should I do with this image?" : "Ask a question..."}
                 disabled={isLoading}
-                className="w-full bg-zinc-900/60 border border-white/10 rounded-2xl pl-4 pr-32 py-4 text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500/50 transition-all text-sm md:text-base"
+                className="w-full bg-zinc-900/60 border border-white/10 rounded-2xl pl-4 pr-32 py-4 text-white placeholder-zinc-500 focus:outline-none focus:border-nexus-electric/50 transition-all text-sm md:text-base"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <input 
@@ -418,7 +417,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-2.5 text-zinc-500 hover:text-indigo-400 hover:bg-white/5 rounded-xl transition-all"
+                  className="p-2.5 text-zinc-500 hover:text-nexus-electric hover:bg-white/5 rounded-xl transition-all"
                   title="Upload notes or image"
                 >
                   <ImageIcon className="w-5 h-5" />
@@ -426,7 +425,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                 <button 
                   type="submit"
                   disabled={isLoading || (!input.trim() && !imageFile)}
-                  className="p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 active:scale-95"
+                  className="p-2.5 bg-nexus-electric hover:bg-nexus-violet text-white rounded-xl transition-all shadow-lg shadow-nexus-electric/20 disabled:opacity-50 active:scale-95"
                 >
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 </button>
@@ -435,36 +434,6 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
           </form>
         </div>
       </div>
-
-      {deletingSessionId && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-sm bg-zinc-900 border border-rose-500/20 rounded-3xl p-8 shadow-2xl space-y-6 text-center">
-            <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto border border-rose-500/20">
-              <AlertTriangle className="w-8 h-8 text-rose-500" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-white tracking-tight">Delete this chat?</h3>
-              <p className="text-zinc-500 text-sm leading-relaxed">
-                This will permanently delete this conversation and its history. This action cannot be undone.
-              </p>
-            </div>
-            <div className="flex gap-3 pt-2">
-              <button 
-                onClick={() => setDeletingSessionId(null)}
-                className="flex-1 py-3 bg-zinc-800 text-white font-bold rounded-xl hover:bg-zinc-700 transition-colors active:scale-95"
-              >
-                Keep It
-              </button>
-              <button 
-                onClick={handleDeleteSession}
-                className="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-500 transition-colors shadow-lg shadow-rose-900/20 active:scale-95"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
