@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Sparkles, Lock, ScanFace, UserPlus, ArrowLeft, LogIn, PlusCircle, Delete, Loader2 } from 'lucide-react';
+import { ArrowRight, Sparkles, Lock, UserPlus, ArrowLeft, LogIn, PlusCircle, Delete, Loader2, X } from 'lucide-react';
 import { authService } from '../services/authService';
 import { UserProfile } from '../types';
 
@@ -8,7 +8,7 @@ interface LoginProps {
   onLogin: (user: UserProfile) => void;
 }
 
-type AuthStep = 'LANDING' | 'SELECT_USER' | 'ENTER_PIN' | 'REGISTER_NAME' | 'REGISTER_PIN';
+type AuthStep = 'LANDING' | 'LOGIN_NAME' | 'ENTER_PIN' | 'REGISTER_NAME' | 'REGISTER_PIN';
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [step, setStep] = useState<AuthStep>('LANDING');
@@ -17,9 +17,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   
   const [pin, setPin] = useState('');
+  const [loginName, setLoginName] = useState('');
   const [newUserName, setNewUserName] = useState('');
   
-  const [isScanning, setIsScanning] = useState(false);
   const [shakeError, setShakeError] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -34,10 +34,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setIsLoadingUsers(false);
   };
 
-  const handleUserSelect = (user: UserProfile) => {
-    setSelectedUser(user);
-    setPin('');
-    setStep('ENTER_PIN');
+  const handleLoginNameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const user = users.find(u => u.name.toLowerCase() === loginName.toLowerCase());
+    if (user) {
+      setSelectedUser(user);
+      setPin('');
+      setStep('ENTER_PIN');
+    } else {
+      setShakeError(true);
+      setTimeout(() => setShakeError(false), 500);
+    }
   };
 
   const handlePinInput = (digit: string) => {
@@ -71,15 +78,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setPin('');
       setTimeout(() => setShakeError(false), 500);
     }
-  };
-
-  const startBiometricScan = () => {
-    if (!selectedUser) return;
-    setIsScanning(true);
-    setTimeout(() => {
-      setIsScanning(false);
-      validateLogin(selectedUser.uid, selectedUser.pin); 
-    }, 1800);
   };
 
   const startRegistration = () => {
@@ -121,17 +119,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           {num}
         </button>
       ))}
-      <div className="flex items-center justify-center">
-        {step === 'ENTER_PIN' && selectedUser?.biometricEnabled && (
-           <button 
-             onClick={startBiometricScan}
-             disabled={isScanning || isProcessing}
-             className="w-16 h-16 rounded-full flex items-center justify-center text-indigo-400 hover:text-white hover:bg-indigo-500/20 transition-all active:scale-90"
-           >
-             <ScanFace className={`w-6 h-6 ${isScanning ? 'animate-pulse' : ''}`} />
-           </button>
-        )}
-      </div>
+      <div className="w-16 h-16" /> {/* Layout Spacing Spacer */}
       <button
         onClick={() => handlePinInput('0')}
         disabled={isProcessing}
@@ -171,19 +159,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden font-sans">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-black to-black pointer-events-none" />
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-20" />
-      
-      {isScanning && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="relative">
-             <div className="absolute inset-0 border-2 border-indigo-500 rounded-lg animate-ping opacity-20" />
-             <ScanFace className="w-24 h-24 text-indigo-400 animate-pulse" strokeWidth={1} />
-             <div className="absolute top-full left-0 right-0 text-center mt-4 text-indigo-400 text-sm font-mono tracking-widest uppercase">
-                Verifying Your Identity...
-             </div>
-             <div className="absolute top-0 left-0 w-full h-0.5 bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,1)] animate-[scan_2s_ease-in-out_infinite]" />
-          </div>
-        </div>
-      )}
 
       <div className={`
          w-full max-w-md relative z-10 transition-all duration-500
@@ -205,18 +180,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             <div className="space-y-4 w-full px-4">
                <button 
-                  onClick={() => setStep('SELECT_USER')}
-                  disabled={isLoadingUsers}
-                  className="w-full group relative p-5 rounded-2xl bg-gradient-to-r from-zinc-900/50 to-zinc-900/30 border border-white/10 hover:border-indigo-500/50 transition-all flex items-center justify-between backdrop-blur-md overflow-hidden disabled:opacity-50 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:scale-[1.02] active:scale-[0.98]"
+                  onClick={() => setStep('LOGIN_NAME')}
+                  className="w-full group relative p-5 rounded-2xl bg-gradient-to-r from-zinc-900/50 to-zinc-900/30 border border-white/10 hover:border-indigo-500/50 transition-all flex items-center justify-between backdrop-blur-md overflow-hidden hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:scale-[1.02] active:scale-[0.98]"
                >
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="flex items-center gap-4 relative z-10">
                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors text-zinc-400 group-hover:shadow-[0_0_10px_rgba(99,102,241,0.5)]">
-                        {isLoadingUsers ? <Loader2 className="w-5 h-5 animate-spin"/> : <LogIn className="w-5 h-5" />}
+                        <LogIn className="w-5 h-5" />
                      </div>
                      <div className="text-left">
                         <div className="text-white font-bold text-lg group-hover:text-indigo-100 transition-colors">Log In</div>
-                        <div className="text-zinc-500 text-xs">Access your work</div>
+                        <div className="text-zinc-500 text-xs">Access your profile</div>
                      </div>
                   </div>
                   <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-white group-hover:translate-x-1 transition-all relative z-10" />
@@ -244,43 +218,47 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
         )}
 
-        {step === 'SELECT_USER' && (
-          <div className="animate-slide-up space-y-8">
+        {step === 'LOGIN_NAME' && (
+          <div className="animate-slide-up bg-zinc-900/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
              <button 
                 onClick={() => setStep('LANDING')}
-                className="absolute -top-12 left-0 text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-sm"
+                className="mb-6 text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-sm"
              >
                 <ArrowLeft className="w-4 h-4" /> Back
              </button>
-
-             <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-white tracking-tight">Who's studying today?</h1>
+             
+             <div className="mb-6">
+                <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
+                <p className="text-zinc-400 text-sm mt-1">Please enter your profile name to continue.</p>
              </div>
-
-             <div className="grid grid-cols-2 gap-4 max-h-[400px] overflow-y-auto custom-scrollbar p-1">
-               {users.map(user => (
-                 <button
-                   key={user.uid}
-                   onClick={() => handleUserSelect(user)}
-                   className="group relative p-4 rounded-2xl bg-zinc-900/40 border border-white/5 hover:border-indigo-500/50 hover:bg-zinc-900/60 transition-all flex flex-col items-center gap-3 backdrop-blur-md hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]"
-                 >
-                   <img src={user.avatar} alt={user.name} className="w-16 h-16 rounded-full border-2 border-zinc-800 group-hover:border-indigo-500 transition-colors shadow-lg" />
-                   <span className="text-white font-medium text-sm group-hover:text-indigo-300 transition-colors">{user.name}</span>
-                 </button>
-               ))}
-               {users.length === 0 && (
-                   <div className="col-span-2 text-zinc-500 text-center py-8">
-                       No users found. Please sign up.
-                   </div>
-               )}
-             </div>
+             
+             <form onSubmit={handleLoginNameSubmit} className="space-y-6">
+                <div>
+                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Profile Name</label>
+                    <input 
+                        autoFocus
+                        value={loginName}
+                        onChange={(e) => setLoginName(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all text-lg focus:shadow-[0_0_15px_rgba(99,102,241,0.1)]"
+                        placeholder="Enter your name..."
+                    />
+                </div>
+                <button 
+                    type="submit"
+                    disabled={!loginName.trim() || isLoadingUsers}
+                    className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-98 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]"
+                >
+                    {isLoadingUsers ? <Loader2 className="w-5 h-5 animate-spin"/> : <span>Continue</span>}
+                    <ArrowRight className="w-4 h-4" />
+                </button>
+             </form>
           </div>
         )}
 
         {step === 'ENTER_PIN' && selectedUser && (
           <div className="animate-slide-up text-center">
             <button 
-              onClick={() => { setStep('SELECT_USER'); setPin(''); }}
+              onClick={() => { setStep('LOGIN_NAME'); setPin(''); }}
               className="absolute left-0 top-0 p-2 text-zinc-500 hover:text-white transition-colors"
             >
               <ArrowLeft className="w-6 h-6" />
@@ -365,11 +343,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           20%, 80% { transform: translate3d(2px, 0, 0); }
           30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
           40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-        @keyframes scan {
-            0% { top: 0; }
-            50% { top: 100%; }
-            100% { top: 0; }
         }
       `}</style>
     </div>
