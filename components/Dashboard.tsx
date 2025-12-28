@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { UserProfile, AppView, ScheduleEvent, TaskStatus, ActivityLog } from '../types.ts';
 import { Zap, Target, BookOpen, Clock, ArrowRight, Play, Sparkles, Calendar, Activity, TrendingUp, Flame, Trophy, Brain, Check } from 'lucide-react';
@@ -25,18 +24,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
       try {
         const todayStr = new Date().toISOString().split('T')[0];
         
-        // Fetch all data required for the dashboard
         const [tasks, schedule, allSessions] = await Promise.all([
           dbService.getTasks(user.uid),
           dbService.getSchedule(user.uid),
-          dbService.getSessions(user.uid) // Fetch all to calculate 7-day pulse
+          dbService.getSessions(user.uid) 
         ]);
 
-        // 1. Task Statistics
         const pending = tasks.filter(t => t.status === TaskStatus.PENDING).length;
         const done = tasks.filter(t => t.status === TaskStatus.DONE).length;
         
-        // 2. Schedule Mapping
         const now = new Date();
         const currentMinutes = now.getHours() * 60 + now.getMinutes();
         const todayEvents = schedule.filter(e => (e.date || todayStr) === todayStr);
@@ -47,29 +43,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
             return (h * 60 + m) > currentMinutes;
           });
 
-        // 3. Daily Progress (Today Only)
         const todaySessions = allSessions.filter(s => s.date === todayStr);
         const todayStudySeconds = todaySessions.reduce((acc, s) => acc + s.duration, 0);
         const dailyGoalSecs = (user.dailyGoalMinutes || 120) * 60;
         setDailyProgress(Math.min(100, (todayStudySeconds / dailyGoalSecs) * 100));
 
-        // 4. Real-time Focus Pulse Calculation (Last 7 Days)
         const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
         const last7DaysSessions = allSessions.filter(s => s.timestamp >= sevenDaysAgo);
 
-        // A. Volume Score: Actual Mins vs Goal Mins over 7 days
         const totalActualMins = last7DaysSessions.reduce((acc, s) => acc + s.duration, 0) / 60;
         const totalGoalMins = (user.dailyGoalMinutes || 120) * 7;
         const volumeScore = Math.min(1, totalActualMins / totalGoalMins);
 
-        // B. Rhythm Score: How many days out of 7 had sessions
         const uniqueDaysStudied = new Set(last7DaysSessions.map(s => s.date)).size;
         const rhythmScore = uniqueDaysStudied / 7;
 
-        // C. Momentum Score: Based on streak (maxed at 7)
         const momentumScore = Math.min(1, (user.streak || 0) / 7);
 
-        // Weighted Focus Pulse
         const calculatedPulse = Math.round(
           (volumeScore * 0.4 + rhythmScore * 0.4 + momentumScore * 0.2) * 100
         );
@@ -86,7 +76,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
 
     fetchData();
 
-    // Live activity stream
     const actQuery = query(collection(db, 'activities'), orderBy('timestamp', 'desc'), limit(5));
     const unsubActs = onSnapshot(actQuery, (snap) => {
        setActivities(snap.docs.map(d => ({ id: d.id, ...d.data() } as ActivityLog)));
@@ -126,48 +115,54 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
       <div className="bento-grid grid-rows-6 h-[1400px] md:h-[900px]">
         
         {/* Main Progress Bento Card */}
-        <div className="col-span-12 md:col-span-8 row-span-3 glass-card rounded-[2.5rem] p-10 flex flex-col justify-between group relative overflow-hidden">
+        <div className="col-span-12 md:col-span-8 row-span-3 glass-card rounded-[2.5rem] p-8 md:p-10 flex flex-col justify-between group relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-nexus-electric/10 blur-[100px] rounded-full -mr-20 -mt-20 group-hover:bg-nexus-electric/20 transition-all duration-700" />
           
           <div className="relative z-10">
-            <div className="flex justify-between items-start mb-12">
+            <div className="flex justify-between items-start mb-10 md:mb-12">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-nexus-slate">Primary Focus</span>
-                <h3 className="text-3xl font-bold text-white mt-1">Daily Flow Objective</h3>
+                <h3 className="text-2xl md:text-3xl font-bold text-white mt-1">Daily Flow Objective</h3>
               </div>
-              <div className="w-14 h-14 rounded-2xl glass flex items-center justify-center border-nexus-electric/20 shadow-[0_0_25px_rgba(var(--nexus-accent-rgb),0.1)]">
-                <Target className="w-7 h-7 text-nexus-electric" />
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl glass flex items-center justify-center border-nexus-electric/20 shadow-[0_0_25px_rgba(var(--nexus-accent-rgb),0.1)] shrink-0">
+                <Target className="w-6 h-6 md:w-7 md:h-7 text-nexus-electric" />
               </div>
             </div>
             
-            <div className="space-y-8">
+            <div className="space-y-6 md:space-y-8">
               <div className="flex justify-between items-end">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-7xl font-black tracking-tighter text-white">{Math.round(dailyProgress)}</span>
-                  <span className="text-3xl font-bold text-nexus-slate">%</span>
+                  <span className="text-6xl md:text-7xl font-black tracking-tighter text-white">{Math.round(dailyProgress)}</span>
+                  <span className="text-2xl md:text-3xl font-bold text-nexus-slate">%</span>
                 </div>
                 <div className="text-right">
                    <p className="text-[10px] font-bold text-nexus-slate uppercase tracking-widest mb-1">XP Potential</p>
-                   <p className="text-2xl font-bold text-white">+{Math.floor(dailyProgress * 5)} <span className="text-nexus-electric">pts</span></p>
+                   <p className="text-xl md:text-2xl font-bold text-white">+{Math.floor(dailyProgress * 5)} <span className="text-nexus-electric">pts</span></p>
                 </div>
               </div>
               
-              <div className="h-5 w-full bg-white/5 rounded-full overflow-hidden p-1 border border-white/5">
+              <div className="h-4 md:h-5 w-full bg-white/5 rounded-full overflow-hidden p-1 border border-white/5">
                 <div 
                   className="h-full bg-gradient-to-r from-nexus-violet to-nexus-electric rounded-full transition-all duration-1000 shadow-[0_0_25px_rgba(var(--nexus-accent-rgb),0.5)]"
                   style={{ width: `${dailyProgress}%` }}
                 />
               </div>
-              <p className="text-sm text-nexus-slate max-w-md">Maintain your current pace to unlock a <span className="text-white font-bold">2x multiplier</span> for your next study session.</p>
+              <p className="text-xs md:text-sm text-nexus-slate max-w-md leading-relaxed">Maintain your current pace to unlock a <span className="text-white font-bold">2x multiplier</span> for your next study session.</p>
             </div>
           </div>
           
-          <div className="relative z-10 flex gap-4 mt-8">
-            <button onClick={() => onViewChange(AppView.FOCUS)} className="px-10 py-4 bg-white text-black font-black rounded-2xl flex items-center gap-3 active:scale-95 transition-all shadow-xl hover:bg-zinc-100">
-              <Play className="w-5 h-5 fill-black" />
+          <div className="relative z-10 flex flex-wrap gap-3 mt-6">
+            <button 
+              onClick={() => onViewChange(AppView.FOCUS)} 
+              className="px-6 py-3 bg-white text-black text-sm font-black rounded-xl md:rounded-2xl flex items-center gap-2 active:scale-95 transition-all shadow-xl hover:bg-zinc-100"
+            >
+              <Play className="w-4 h-4 fill-black" />
               Initiate Focus
             </button>
-            <button onClick={() => onViewChange(AppView.ANALYTICS)} className="px-10 py-4 glass text-white font-black rounded-2xl glass-card active:scale-95 transition-all">
+            <button 
+              onClick={() => onViewChange(AppView.ANALYTICS)} 
+              className="px-6 py-3 glass text-white text-sm font-black rounded-xl md:rounded-2xl glass-card active:scale-95 transition-all"
+            >
               Performance Metrics
             </button>
           </div>
