@@ -59,6 +59,7 @@ const App: React.FC = () => {
     }
   });
 
+  // --- TIMER STATE ---
   const [timerMode, setTimerMode] = useState<'focus' | 'short' | 'long'>('focus');
   const [timerIsActive, setTimerIsActive] = useState(false);
   const [timerTimeLeft, setTimerTimeLeft] = useState(25 * 60);
@@ -70,7 +71,9 @@ const App: React.FC = () => {
     return localStorage.getItem('nexus_timer_muted') === 'true';
   });
   const [showAlarmToast, setShowAlarmToast] = useState(false);
+  
   const timerIntervalRef = useRef<any>(null);
+  const timerEndTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -120,12 +123,14 @@ const App: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
+  // Restore Timer State from LocalStorage (Handling tab reloads/backgrounding)
   useEffect(() => {
     const savedEnd = localStorage.getItem('nexus_timer_end');
     const savedActive = localStorage.getItem('nexus_timer_active') === 'true';
     const savedMode = localStorage.getItem('nexus_timer_mode') as any;
     const savedSubject = localStorage.getItem('nexus_timer_subject') || DEFAULT_SUBJECTS[0];
     const savedTotal = parseInt(localStorage.getItem('nexus_timer_total') || '1500');
+    const savedRemaining = parseInt(localStorage.getItem('nexus_timer_remaining') || '1500');
 
     if (savedActive && savedEnd) {
       const remaining = Math.round((parseInt(savedEnd) - Date.now()) / 1000);
@@ -135,30 +140,34 @@ const App: React.FC = () => {
         setTimerMode(savedMode || 'focus');
         setTimerSubject(savedSubject);
         setTimerTotalTime(savedTotal);
+        timerEndTimeRef.current = parseInt(savedEnd);
       } else {
-        localStorage.removeItem('nexus_timer_active');
-        localStorage.removeItem('nexus_timer_end');
+        // Timer finished while tab was closed
+        handleTimerComplete();
       }
     } else {
-      const settings = JSON.parse(localStorage.getItem('nexus_timer_settings') || '{"focus": 25, "short": 5, "long": 15}');
-      setTimerTimeLeft(settings[savedMode || 'focus'] * 60);
-      setTimerTotalTime(settings[savedMode || 'focus'] * 60);
+      // Not active, load the paused state or default settings
+      setTimerTimeLeft(savedRemaining);
+      setTimerTotalTime(savedTotal);
       setTimerMode(savedMode || 'focus');
       setTimerSubject(savedSubject);
+      setTimerIsActive(false);
     }
   }, []);
 
+  // Timer Tick Logic (Timestamp Based)
   useEffect(() => {
-    if (timerIsActive && timerTimeLeft > 0) {
+    if (timerIsActive) {
       timerIntervalRef.current = setInterval(() => {
-        setTimerTimeLeft(prev => {
-          if (prev <= 1) {
+        if (timerEndTimeRef.current) {
+          const remaining = Math.max(0, Math.round((timerEndTimeRef.current - Date.now()) / 1000));
+          setTimerTimeLeft(remaining);
+          
+          if (remaining <= 0) {
             handleTimerComplete();
-            return 0;
           }
-          return prev - 1;
-        });
-      }, 1000);
+        }
+      }, 500); // Check every 500ms for smoothness, but logic is timestamp based
     } else {
       clearInterval(timerIntervalRef.current);
     }
@@ -208,8 +217,11 @@ const App: React.FC = () => {
 
   const handleTimerComplete = async () => {
     setTimerIsActive(false);
+    setTimerTimeLeft(0);
     localStorage.removeItem('nexus_timer_active');
     localStorage.removeItem('nexus_timer_end');
+    localStorage.setItem('nexus_timer_remaining', '0');
+    
     playFeedbackSound('complete');
     setShowAlarmToast(true);
 
@@ -233,14 +245,15 @@ const App: React.FC = () => {
     }
   };
 
+  // Logic to handle "Finish Early" but SAVE progress
   const handleManualEnd = async () => {
       if (!timerIsActive || !user) return;
+      
+      const elapsedSeconds = Math.max(0, timerTotalTime - timerTimeLeft);
       
       setTimerIsActive(false);
       localStorage.removeItem('nexus_timer_active');
       localStorage.removeItem('nexus_timer_end');
-      
-      const elapsedSeconds = Math.max(0, timerTotalTime - timerTimeLeft);
       
       if (timerMode === 'focus' && elapsedSeconds > 1) {
           try {
@@ -268,21 +281,24 @@ const App: React.FC = () => {
       const resetDuration = settings[timerMode] * 60;
       setTimerTimeLeft(resetDuration);
       setTimerTotalTime(resetDuration);
+      localStorage.setItem('nexus_timer_remaining', resetDuration.toString());
       
       await dbService.updateUserStatus(user.uid, 'online');
       playFeedbackSound('stop');
   };
 
   const handleStartTimer = (duration: number, mode: string, subject: string) => {
+    // duration here is actually the "remaining time"
     const endTime = Date.now() + (duration * 1000);
+    timerEndTimeRef.current = endTime;
+    
     localStorage.setItem('nexus_timer_active', 'true');
     localStorage.setItem('nexus_timer_end', endTime.toString());
     localStorage.setItem('nexus_timer_mode', mode);
     localStorage.setItem('nexus_timer_subject', subject);
-    localStorage.setItem('nexus_timer_total', duration.toString());
+    localStorage.setItem('nexus_timer_total', timerTotalTime.toString());
     
     setTimerTimeLeft(duration);
-    setTimerTotalTime(duration);
     setTimerIsActive(true);
     setTimerMode(mode as any);
     setTimerSubject(subject);
@@ -292,17 +308,25 @@ const App: React.FC = () => {
   };
 
   const handleStopTimer = () => {
+    // This acts as a "Pause"
     setTimerIsActive(false);
     localStorage.removeItem('nexus_timer_active');
     localStorage.removeItem('nexus_timer_end');
+    localStorage.setItem('nexus_timer_remaining', timerTimeLeft.toString());
+    
     if (user) dbService.updateUserStatus(user.uid, 'online');
     playFeedbackSound('stop');
   };
 
   const handleResetTimer = (duration: number) => {
-    handleStopTimer();
+    setTimerIsActive(false);
+    localStorage.removeItem('nexus_timer_active');
+    localStorage.removeItem('nexus_timer_end');
     setTimerTimeLeft(duration);
     setTimerTotalTime(duration);
+    localStorage.setItem('nexus_timer_remaining', duration.toString());
+    localStorage.setItem('nexus_timer_total', duration.toString());
+    playFeedbackSound('stop');
   };
 
   const handleLogin = (newUser: UserProfile) => {
@@ -513,7 +537,7 @@ const App: React.FC = () => {
             currentView={currentView} 
             onChangeView={setCurrentView} 
             onLogout={handleLogout} 
-            activeTimerMins={timerIsActive ? Math.ceil(timerTimeLeft / 60) : null}
+            activeTimerMins={timerIsActive ? Math.ceil(timerTimeLeft / 60) : (timerTimeLeft < timerTotalTime ? Math.ceil(timerTimeLeft/60) : null)}
         />
       </div>
       <main className="flex-1 h-full relative z-10 overflow-hidden">
