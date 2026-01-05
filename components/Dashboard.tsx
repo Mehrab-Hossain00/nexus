@@ -153,7 +153,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
           
           <div className="relative z-10 flex flex-wrap gap-3 mt-6">
             <button 
-              onClick={() => onViewChange(AppView.FOCUS)} 
+              // Fix: AppView.FOCUS does not exist. Use AppView.TIMER to initiate focus.
+              onClick={() => onViewChange(AppView.TIMER)} 
               className="px-6 py-3 bg-white text-black text-sm font-black rounded-xl md:rounded-2xl flex items-center gap-2 active:scale-95 transition-all shadow-xl hover:bg-zinc-100"
             >
               <Play className="w-4 h-4 fill-black" />

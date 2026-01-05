@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, LayoutDashboard, CheckSquare, Clock, BrainCircuit, Users, BarChart2, Settings, X, ArrowRight, Zap, Target } from 'lucide-react';
 import { AppView } from '../types.ts';
@@ -13,7 +14,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onClose, onNavig
   const commands = [
     { view: AppView.DASHBOARD, icon: LayoutDashboard, label: 'Control Center', keywords: 'home dashboard main' },
     { view: AppView.TASKS, icon: CheckSquare, label: 'Task Matrix', keywords: 'todo homework assignment' },
-    { view: AppView.FOCUS, icon: Clock, label: 'Focus Chamber', keywords: 'pomodoro timer session' },
+    { view: AppView.TIMER, icon: Clock, label: 'Timer Module', keywords: 'pomodoro stopwatch timer session focus' },
     { view: AppView.TUTOR, icon: BrainCircuit, label: 'AI Study Hub', keywords: 'ai tutor gpt chat help' },
     { view: AppView.GROUPS, icon: Users, label: 'Nexus Groups', keywords: 'collaborate friends group social' },
     { view: AppView.ANALYTICS, icon: BarChart2, label: 'Neural Analytics', keywords: 'stats graphs performance' },
@@ -44,7 +45,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onClose, onNavig
             autoFocus
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search commands (e.g. Focus, AI, Stats)..."
+            placeholder="Search commands (e.g. Timer, AI, Tasks)..."
             className="w-full bg-transparent border-none px-16 py-6 text-white placeholder-nexus-slate focus:outline-none text-xl font-medium"
           />
           <button onClick={onClose} className="absolute right-6 top-1/2 -translate-y-1/2 p-2 hover:bg-white/5 rounded-xl text-nexus-slate transition-colors">
@@ -80,7 +81,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onClose, onNavig
                <div className="py-16 flex flex-col items-center justify-center text-center opacity-40">
                   <Zap className="w-12 h-12 mb-4 text-nexus-slate" />
                   <p className="text-white font-bold text-lg">No command found for "{query}"</p>
-                  <p className="text-xs text-nexus-slate mt-1 tracking-widest uppercase">Try keywords like 'focus' or 'tutor'</p>
+                  <p className="text-xs text-nexus-slate mt-1 tracking-widest uppercase">Try keywords like 'timer' or 'tutor'</p>
                </div>
              )}
            </div>

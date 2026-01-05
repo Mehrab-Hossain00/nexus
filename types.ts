@@ -3,7 +3,7 @@ export enum AppView {
   DASHBOARD = 'DASHBOARD',
   TASKS = 'TASKS',
   SCHEDULE = 'SCHEDULE',
-  FOCUS = 'FOCUS',
+  TIMER = 'TIMER',
   TUTOR = 'TUTOR',
   ANALYTICS = 'ANALYTICS',
   GROUPS = 'GROUPS',

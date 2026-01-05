@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
@@ -30,7 +31,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
     { view: AppView.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
     { view: AppView.TASKS, icon: CheckSquare, label: 'Tasks' },
     { view: AppView.SCHEDULE, icon: Calendar, label: 'Schedule' },
-    { view: AppView.FOCUS, icon: Clock, label: 'Focus' },
+    { view: AppView.TIMER, icon: Clock, label: 'Timer' },
     { view: AppView.GROUPS, icon: Users, label: 'Groups' },
     { view: AppView.TUTOR, icon: BrainCircuit, label: 'AI Tutor' },
     { view: AppView.ANALYTICS, icon: BarChart2, label: 'Analytics' },
@@ -74,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
           <nav className="space-y-2">
             {navItems.map((item) => {
               const isActive = currentView === item.view;
-              const hasTimer = item.view === AppView.FOCUS && activeTimerMins !== null;
+              const hasTimer = item.view === AppView.TIMER && activeTimerMins !== null;
               
               return (
                 <button

@@ -60,9 +60,12 @@ const App: React.FC = () => {
   });
 
   // --- TIMER STATE ---
+  const [timerType, setTimerType] = useState<'stopwatch' | 'pomodoro'>(() => {
+    return (localStorage.getItem('nexus_timer_type') as 'stopwatch' | 'pomodoro') || 'stopwatch';
+  });
   const [timerMode, setTimerMode] = useState<'focus' | 'short' | 'long'>('focus');
   const [timerIsActive, setTimerIsActive] = useState(false);
-  const [timerTimeLeft, setTimerTimeLeft] = useState(25 * 60);
+  const [timerTimeValue, setTimerTimeValue] = useState(0); 
   const [timerTotalTime, setTimerTotalTime] = useState(25 * 60);
   const [timerSubject, setTimerSubject] = useState(() => {
     return localStorage.getItem('nexus_timer_subject') || DEFAULT_SUBJECTS[0];
@@ -73,7 +76,7 @@ const App: React.FC = () => {
   const [showAlarmToast, setShowAlarmToast] = useState(false);
   
   const timerIntervalRef = useRef<any>(null);
-  const timerEndTimeRef = useRef<number | null>(null);
+  const timerTargetTimeRef = useRef<number | null>(null); 
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,6 +100,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('nexus_timer_muted', isMuted.toString());
   }, [isMuted]);
+
+  useEffect(() => {
+    localStorage.setItem('nexus_timer_type', timerType);
+  }, [timerType]);
 
   useEffect(() => {
     const initSession = async () => {
@@ -123,56 +130,61 @@ const App: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
 
-  // Restore Timer State from LocalStorage (Handling tab reloads/backgrounding)
+  // Restore Timer State from LocalStorage
   useEffect(() => {
-    const savedEnd = localStorage.getItem('nexus_timer_end');
+    const savedTarget = localStorage.getItem('nexus_timer_target');
     const savedActive = localStorage.getItem('nexus_timer_active') === 'true';
-    const savedMode = localStorage.getItem('nexus_timer_mode') as any;
-    const savedSubject = localStorage.getItem('nexus_timer_subject') || DEFAULT_SUBJECTS[0];
+    const savedType = (localStorage.getItem('nexus_timer_type') as 'stopwatch' | 'pomodoro') || 'stopwatch';
+    const savedMode = (localStorage.getItem('nexus_timer_mode') as any) || 'focus';
+    const savedValue = parseInt(localStorage.getItem('nexus_timer_value') || '0');
     const savedTotal = parseInt(localStorage.getItem('nexus_timer_total') || '1500');
-    const savedRemaining = parseInt(localStorage.getItem('nexus_timer_remaining') || '1500');
 
-    if (savedActive && savedEnd) {
-      const remaining = Math.round((parseInt(savedEnd) - Date.now()) / 1000);
-      if (remaining > 0) {
-        setTimerTimeLeft(remaining);
-        setTimerIsActive(true);
-        setTimerMode(savedMode || 'focus');
-        setTimerSubject(savedSubject);
-        setTimerTotalTime(savedTotal);
-        timerEndTimeRef.current = parseInt(savedEnd);
+    setTimerType(savedType);
+    setTimerMode(savedMode);
+    setTimerTotalTime(savedTotal);
+
+    if (savedActive && savedTarget) {
+      const targetTime = parseInt(savedTarget);
+      timerTargetTimeRef.current = targetTime;
+      setTimerIsActive(true);
+      
+      if (savedType === 'pomodoro') {
+        const remaining = Math.round((targetTime - Date.now()) / 1000);
+        if (remaining > 0) {
+          setTimerTimeValue(remaining);
+        } else {
+          handleTimerComplete();
+        }
       } else {
-        // Timer finished while tab was closed
-        handleTimerComplete();
+        const elapsed = Math.round((Date.now() - targetTime) / 1000);
+        setTimerTimeValue(elapsed);
       }
     } else {
-      // Not active, load the paused state or default settings
-      setTimerTimeLeft(savedRemaining);
-      setTimerTotalTime(savedTotal);
-      setTimerMode(savedMode || 'focus');
-      setTimerSubject(savedSubject);
+      setTimerTimeValue(savedValue);
       setTimerIsActive(false);
     }
   }, []);
 
-  // Timer Tick Logic (Timestamp Based)
+  // Timer Tick Logic
   useEffect(() => {
     if (timerIsActive) {
       timerIntervalRef.current = setInterval(() => {
-        if (timerEndTimeRef.current) {
-          const remaining = Math.max(0, Math.round((timerEndTimeRef.current - Date.now()) / 1000));
-          setTimerTimeLeft(remaining);
-          
-          if (remaining <= 0) {
-            handleTimerComplete();
+        if (timerTargetTimeRef.current) {
+          if (timerType === 'pomodoro') {
+            const remaining = Math.max(0, Math.round((timerTargetTimeRef.current - Date.now()) / 1000));
+            setTimerTimeValue(remaining);
+            if (remaining <= 0) handleTimerComplete();
+          } else {
+            const elapsed = Math.max(0, Math.round((Date.now() - timerTargetTimeRef.current) / 1000));
+            setTimerTimeValue(elapsed);
           }
         }
-      }, 500); // Check every 500ms for smoothness, but logic is timestamp based
+      }, 500);
     } else {
       clearInterval(timerIntervalRef.current);
     }
     return () => clearInterval(timerIntervalRef.current);
-  }, [timerIsActive]);
+  }, [timerIsActive, timerType]);
 
   const playFeedbackSound = (type: 'start' | 'stop' | 'complete' | 'break') => {
     if (isMuted) return;
@@ -217,20 +229,28 @@ const App: React.FC = () => {
 
   const handleTimerComplete = async () => {
     setTimerIsActive(false);
-    setTimerTimeLeft(0);
+    setTimerTimeValue(0);
     localStorage.removeItem('nexus_timer_active');
-    localStorage.removeItem('nexus_timer_end');
-    localStorage.setItem('nexus_timer_remaining', '0');
+    localStorage.removeItem('nexus_timer_target');
+    localStorage.setItem('nexus_timer_value', '0');
     
     playFeedbackSound('complete');
     setShowAlarmToast(true);
 
-    if (timerMode === 'focus' && user) {
+    if (timerType === 'pomodoro' && timerMode === 'focus' && user) {
+        await saveSession(timerTotalTime);
+        await dbService.updateUserStatus(user.uid, 'break');
+    }
+  };
+
+  const saveSession = async (durationSecs: number) => {
+    if (!user || durationSecs < 1) return;
+    try {
         await dbService.logSession({
             id: crypto.randomUUID(),
             userId: user.uid,
             subject: timerSubject,
-            duration: timerTotalTime,
+            duration: durationSecs,
             timestamp: Date.now(),
             date: new Date().toISOString().split('T')[0]
         });
@@ -239,67 +259,59 @@ const App: React.FC = () => {
             userName: user.name,
             type: 'session_completed',
             subject: timerSubject,
-            duration: timerTotalTime
+            duration: durationSecs
         });
-        await dbService.updateUserStatus(user.uid, 'break');
+    } catch (err) {
+        console.error("Failed to save session:", err);
     }
   };
 
-  // Logic to handle "Finish Early" but SAVE progress
   const handleManualEnd = async () => {
-      if (!timerIsActive || !user) return;
-      
-      const elapsedSeconds = Math.max(0, timerTotalTime - timerTimeLeft);
+      if (!user) return;
+      const duration = timerType === 'pomodoro' ? (timerTotalTime - timerTimeValue) : timerTimeValue;
       
       setTimerIsActive(false);
       localStorage.removeItem('nexus_timer_active');
-      localStorage.removeItem('nexus_timer_end');
+      localStorage.removeItem('nexus_timer_target');
       
-      if (timerMode === 'focus' && elapsedSeconds > 1) {
-          try {
-              await dbService.logSession({
-                  id: crypto.randomUUID(),
-                  userId: user.uid,
-                  subject: timerSubject,
-                  duration: elapsedSeconds,
-                  timestamp: Date.now(),
-                  date: new Date().toISOString().split('T')[0]
-              });
-              await dbService.logActivity({
-                  userId: user.uid,
-                  userName: user.name,
-                  type: 'session_completed',
-                  subject: timerSubject,
-                  duration: elapsedSeconds
-              });
-          } catch (err) {
-              console.error("Failed to save manual session:", err);
-          }
+      if (timerMode === 'focus' && duration > 1) {
+          await saveSession(duration);
       }
       
-      const settings = JSON.parse(localStorage.getItem('nexus_timer_settings') || '{"focus": 25, "short": 5, "long": 15}');
-      const resetDuration = settings[timerMode] * 60;
-      setTimerTimeLeft(resetDuration);
-      setTimerTotalTime(resetDuration);
-      localStorage.setItem('nexus_timer_remaining', resetDuration.toString());
-      
+      resetToDefault();
       await dbService.updateUserStatus(user.uid, 'online');
       playFeedbackSound('stop');
   };
 
-  const handleStartTimer = (duration: number, mode: string, subject: string) => {
-    // duration here is actually the "remaining time"
-    const endTime = Date.now() + (duration * 1000);
-    timerEndTimeRef.current = endTime;
+  const resetToDefault = () => {
+    if (timerType === 'stopwatch') {
+      setTimerTimeValue(0);
+      localStorage.setItem('nexus_timer_value', '0');
+    } else {
+      const settings = JSON.parse(localStorage.getItem('nexus_timer_settings') || '{"focus": 25, "short": 5, "long": 15}');
+      const dur = settings[timerMode] * 60;
+      setTimerTimeValue(dur);
+      setTimerTotalTime(dur);
+      localStorage.setItem('nexus_timer_value', dur.toString());
+      localStorage.setItem('nexus_timer_total', dur.toString());
+    }
+  };
+
+  const handleStartTimer = (value: number, type: 'stopwatch' | 'pomodoro', mode: string, subject: string) => {
+    const isPomodoro = type === 'pomodoro';
+    const target = isPomodoro ? (Date.now() + value * 1000) : (Date.now() - value * 1000);
     
+    timerTargetTimeRef.current = target;
     localStorage.setItem('nexus_timer_active', 'true');
-    localStorage.setItem('nexus_timer_end', endTime.toString());
+    localStorage.setItem('nexus_timer_target', target.toString());
+    localStorage.setItem('nexus_timer_type', type);
     localStorage.setItem('nexus_timer_mode', mode);
     localStorage.setItem('nexus_timer_subject', subject);
     localStorage.setItem('nexus_timer_total', timerTotalTime.toString());
     
-    setTimerTimeLeft(duration);
+    setTimerTimeValue(value);
     setTimerIsActive(true);
+    setTimerType(type);
     setTimerMode(mode as any);
     setTimerSubject(subject);
 
@@ -308,24 +320,23 @@ const App: React.FC = () => {
   };
 
   const handleStopTimer = () => {
-    // This acts as a "Pause"
     setTimerIsActive(false);
     localStorage.removeItem('nexus_timer_active');
-    localStorage.removeItem('nexus_timer_end');
-    localStorage.setItem('nexus_timer_remaining', timerTimeLeft.toString());
+    localStorage.removeItem('nexus_timer_target');
+    localStorage.setItem('nexus_timer_value', timerTimeValue.toString());
     
     if (user) dbService.updateUserStatus(user.uid, 'online');
     playFeedbackSound('stop');
   };
 
-  const handleResetTimer = (duration: number) => {
+  const handleResetTimer = (value: number) => {
     setTimerIsActive(false);
     localStorage.removeItem('nexus_timer_active');
-    localStorage.removeItem('nexus_timer_end');
-    setTimerTimeLeft(duration);
-    setTimerTotalTime(duration);
-    localStorage.setItem('nexus_timer_remaining', duration.toString());
-    localStorage.setItem('nexus_timer_total', duration.toString());
+    localStorage.removeItem('nexus_timer_target');
+    setTimerTimeValue(value);
+    if (timerType === 'pomodoro') setTimerTotalTime(value);
+    localStorage.setItem('nexus_timer_value', value.toString());
+    localStorage.setItem('nexus_timer_total', value.toString());
     playFeedbackSound('stop');
   };
 
@@ -375,22 +386,17 @@ const App: React.FC = () => {
     switch (currentView) {
       case AppView.DASHBOARD: return <Dashboard user={user} onViewChange={setCurrentView} />;
       case AppView.TASKS: return <TaskManager user={user} />;
-      case AppView.SCHEDULE: return (
-        <SmartSchedule 
-          user={user} 
-          subjects={subjects} 
-          setSubjects={setSubjects} 
-        />
-      );
-      case AppView.FOCUS: return (
+      case AppView.SCHEDULE: return <SmartSchedule user={user} subjects={subjects} setSubjects={setSubjects} />;
+      case AppView.TIMER: return (
         <FocusTimer 
           user={user} 
           subjects={subjects}
           setSubjects={setSubjects}
           globalTimer={{
             isActive: timerIsActive,
-            timeLeft: timerTimeLeft,
+            timeValue: timerTimeValue,
             totalTime: timerTotalTime,
+            type: timerType,
             mode: timerMode,
             subject: timerSubject,
             isMuted: isMuted,
@@ -399,6 +405,7 @@ const App: React.FC = () => {
             stop: handleStopTimer,
             reset: handleResetTimer,
             manualEnd: handleManualEnd,
+            setType: setTimerType,
             setMode: setTimerMode,
             setSubject: setTimerSubject
           }} 
@@ -413,7 +420,6 @@ const App: React.FC = () => {
                   <h2 className="text-3xl font-bold text-white tracking-tight">System Configuration</h2>
                   <p className="text-zinc-500 text-sm mt-1">Manage your identity and visual experience.</p>
               </header>
-              
               <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-8 backdrop-blur-sm">
                   <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-nexus-electric/10 border border-nexus-electric/20 flex items-center justify-center">
@@ -424,7 +430,6 @@ const App: React.FC = () => {
                           <p className="text-xs text-zinc-500">How you appear to the community.</p>
                       </div>
                   </div>
-
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
                       {AVATAR_PRESETS.map((preset, idx) => {
                           const url = `https://api.dicebear.com/7.x/${preset.style}/svg?seed=${preset.seed}&backgroundColor=transparent`;
@@ -446,7 +451,6 @@ const App: React.FC = () => {
                       })}
                   </div>
               </div>
-
               <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-8 backdrop-blur-sm">
                   <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
@@ -457,7 +461,6 @@ const App: React.FC = () => {
                           <p className="text-xs text-zinc-500">Minimal black foundation with vibrant accents.</p>
                       </div>
                   </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {THEMES.map((theme) => {
                       const isActive = currentTheme === theme.id;
@@ -480,12 +483,7 @@ const App: React.FC = () => {
                             <p className="text-sm font-bold text-white">{theme.name}</p>
                             <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">{theme.description}</p>
                           </div>
-                          <div 
-                            className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br transition-opacity opacity-5" 
-                            style={{ 
-                              backgroundImage: `linear-gradient(to bottom right, ${theme.colors[1]}, transparent)` 
-                            }} 
-                          />
+                          <div className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br transition-opacity opacity-5" style={{ backgroundImage: `linear-gradient(to bottom right, ${theme.colors[1]}, transparent)` }} />
                         </button>
                       );
                     })}
@@ -500,7 +498,6 @@ const App: React.FC = () => {
   return (
     <div className={`flex h-screen overflow-hidden bg-nexus-black text-zinc-100 font-sans transition-all duration-1000`}>
       <div className={`fixed inset-0 bg-gradient-to-tr from-nexus-electric/10 via-nexus-black to-nexus-black pointer-events-none opacity-60 z-0 transition-colors duration-1000`} />
-      
       {isCommandPaletteOpen && (
         <CommandPalette 
           onClose={() => setIsCommandPaletteOpen(false)} 
@@ -510,7 +507,6 @@ const App: React.FC = () => {
           }}
         />
       )}
-
       {showAlarmToast && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[1000] animate-slide-up">
             <div className="bg-nexus-electric text-white px-8 py-4 rounded-2xl shadow-[0_0_50px_rgba(var(--nexus-accent-rgb),0.5)] border border-nexus-violet/50 flex items-center gap-6">
@@ -521,23 +517,19 @@ const App: React.FC = () => {
                     <h4 className="font-bold text-lg leading-tight text-white">Session Complete</h4>
                     <p className="text-white/70 text-sm">Time for a well-deserved break.</p>
                 </div>
-                <button 
-                    onClick={() => setShowAlarmToast(false)}
-                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                >
+                <button onClick={() => setShowAlarmToast(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                     <X className="w-5 h-5 text-white" />
                 </button>
             </div>
         </div>
       )}
-
       <div className="relative z-50 h-full">
         <Sidebar 
             user={user}
             currentView={currentView} 
             onChangeView={setCurrentView} 
             onLogout={handleLogout} 
-            activeTimerMins={timerIsActive ? Math.ceil(timerTimeLeft / 60) : (timerTimeLeft < timerTotalTime ? Math.ceil(timerTimeLeft/60) : null)}
+            activeTimerMins={timerIsActive ? Math.ceil(timerTimeValue / 60) : (timerType === 'pomodoro' && timerTimeValue < timerTotalTime ? Math.ceil(timerTimeValue/60) : null)}
         />
       </div>
       <main className="flex-1 h-full relative z-10 overflow-hidden">
