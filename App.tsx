@@ -7,7 +7,7 @@ import { SmartSchedule } from './components/SmartSchedule.tsx';
 import { FocusTimer } from './components/FocusTimer.tsx';
 import { AITutor } from './components/AITutor.tsx';
 import { Analytics } from './components/Analytics.tsx';
-import { Groups } from './components/Groups.tsx';
+import { NexusHub } from './components/NexusHub.tsx';
 import { Login } from './components/Login.tsx';
 import { CommandPalette } from './components/CommandPalette.tsx';
 import { authService } from './services/authService.ts';
@@ -261,6 +261,16 @@ const App: React.FC = () => {
             subject: timerSubject,
             duration: durationSecs
         });
+        // NEW: Public post to the Hub
+        await dbService.createPost({
+          userId: user.uid,
+          userName: user.name,
+          userAvatar: user.avatar || '',
+          type: 'session_complete',
+          content: `${user.name} just completed a high-density ${Math.round(durationSecs / 60)}m focus session!`,
+          subject: timerSubject,
+          duration: durationSecs
+        });
     } catch (err) {
         console.error("Failed to save session:", err);
     }
@@ -411,7 +421,7 @@ const App: React.FC = () => {
           }} 
         />
       );
-      case AppView.GROUPS: return <Groups user={user} />;
+      case AppView.HUB: return <NexusHub user={user} />;
       case AppView.TUTOR: return <AITutor user={user} />;
       case AppView.ANALYTICS: return <Analytics user={user} />;
       case AppView.SETTINGS: return (

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Search, Check, Trash2, Calendar, Tag, Filter, Loader2, Bell, X, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Search, Check, Trash2, Calendar, Tag, Filter, Loader2, Bell, X, AlertCircle, History } from 'lucide-react';
 import { Task, TaskPriority, TaskStatus, UserProfile } from '../types';
 import { dbService } from '../services/dbService';
 
@@ -9,16 +9,14 @@ interface TaskManagerProps {
 
 const REMINDER_OPTIONS = [
     { label: 'None', value: 0 },
-    { label: '15 minutes before', value: 15 },
+    { label: '15 mins before', value: 15 },
     { label: '1 hour before', value: 60 },
     { label: '1 day before', value: 1440 },
-    { label: '2 days before', value: 2880 },
 ];
 
 export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [filter, setFilter] = useState<'All' | 'Pending' | 'Done'>('All');
-  const [timeFilter, setTimeFilter] = useState<'All' | 'Today' | 'Week' | 'Month'>('All');
+  const [filter, setFilter] = useState<'Today' | 'History' | 'Done'>('Today');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +33,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
         const fetchedTasks = await dbService.getTasks(user.uid);
         setTasks(fetchedTasks);
       } catch (err: any) {
-        setError(`Cloud Error: ${err.code || 'Sync Failed'}`);
+        setError(`Cloud error: ${err.code || 'Sync failed'}`);
       } finally {
         setIsLoading(false);
       }
@@ -53,7 +51,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       await dbService.updateTaskStatus(id, newStatus);
     } catch (err) {
       setTasks(originalTasks);
-      setError("Update failed. Check connection.");
+      setError("Update failed.");
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -82,7 +80,6 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       subject: formData.get('subject') as string,
       priority: formData.get('priority') as TaskPriority,
       status: TaskStatus.PENDING,
-      // If due date is empty string, keep it as undefined (will be handled by sanitize)
       dueDate: dueDateVal || undefined,
       reminderOffset: reminderVal > 0 ? reminderVal : undefined,
       createdAt: Date.now()
@@ -96,46 +93,41 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       await dbService.addTask(newTask, user.uid);
     } catch (err: any) {
       setTasks(originalTasks);
-      setError(`Save Failed: ${err.code || 'Check rules'}`);
+      setError(`Save failed.`);
       setTimeout(() => setError(null), 5000);
     }
   };
 
-  const formatDueDate = (dateStr?: string) => {
-      if (!dateStr) return '';
-      try {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-      } catch {
-        return '';
-      }
-  };
+  const filteredTasks = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return tasks.filter(t => {
+      const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           t.subject.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const taskDate = new Date(t.createdAt).toISOString().split('T')[0];
+      const isToday = taskDate === todayStr;
 
-  const isToday = (dateStr: string) => {
-      try {
-        return new Date(dateStr).toDateString() === new Date().toDateString();
-      } catch { return false; }
-  };
-
-  const filteredTasks = tasks
-    .filter(t => filter === 'All' || t.status === (filter === 'Done' ? TaskStatus.DONE : TaskStatus.PENDING))
-    .filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase()) || t.subject.toLowerCase().includes(searchTerm.toLowerCase()))
-    .filter(t => {
-        if (timeFilter === 'All') return true;
-        if (!t.dueDate) return false; 
-        if (timeFilter === 'Today') return isToday(t.dueDate);
-        return true;
+      if (filter === 'Today') return matchesSearch && isToday && t.status === TaskStatus.PENDING;
+      if (filter === 'Done') return matchesSearch && t.status === TaskStatus.DONE;
+      if (filter === 'History') return matchesSearch && !isToday;
+      return matchesSearch;
     });
+  }, [tasks, filter, searchTerm]);
+
+  const historyStats = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const pastTasks = tasks.filter(t => new Date(t.createdAt).toISOString().split('T')[0] !== todayStr);
+    const completed = pastTasks.filter(t => t.status === TaskStatus.DONE).length;
+    const missed = pastTasks.filter(t => t.status === TaskStatus.PENDING).length;
+    return { completed, missed };
+  }, [tasks]);
 
   return (
     <div className="h-full flex flex-col animate-fade-in relative">
       {error && (
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-3 animate-bounce border border-rose-400/50">
            <AlertCircle className="w-5 h-5" />
-           <div className="flex flex-col">
-              <span>{error}</span>
-              <span className="text-[10px] opacity-70 font-normal">Check console for details</span>
-           </div>
+           <span>{error}</span>
            <button onClick={() => setError(null)}><X className="w-4 h-4" /></button>
         </div>
       )}
@@ -143,49 +135,66 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       <div className="shrink-0 space-y-8 pb-6">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Tasks</h1>
-            <p className="text-zinc-500 text-sm mt-1">Manage your academic workload.</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight">Today's Tasks</h1>
+            <p className="text-zinc-500 text-sm mt-1">Get things done, one step at a time.</p>
             </div>
             <button 
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 px-6 py-2.5 bg-nexus-electric hover:bg-nexus-violet text-white font-semibold rounded-xl transition-all shadow-lg active:scale-95"
             >
             <Plus className="w-4 h-4" />
-            <span>New Task</span>
+            <span>Add Task</span>
             </button>
         </header>
 
-        <div className="flex flex-col gap-4">
-            <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-nexus-electric transition-colors" />
-                    <input 
-                        type="text" 
-                        placeholder="Search tasks..." 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-zinc-900/30 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-nexus-electric/50 transition-all"
-                    />
-                </div>
-                <div className="flex bg-zinc-900/30 border border-white/5 rounded-xl p-1 gap-1">
-                    {['All', 'Pending', 'Done'].map((f) => (
-                        <button
-                        key={f}
-                        onClick={() => setFilter(f as any)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all
-                            ${filter === f 
-                            ? 'bg-zinc-800 text-white border border-white/5' 
-                            : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
-                        >
-                        {f}
-                        </button>
-                    ))}
-                </div>
+        <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1 group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-nexus-electric transition-colors" />
+                <input 
+                    type="text" 
+                    placeholder="Search your tasks..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-zinc-900/30 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-nexus-electric/50 transition-all shadow-inner"
+                />
+            </div>
+            <div className="flex bg-zinc-900/30 border border-white/5 rounded-xl p-1 gap-1">
+                {['Today', 'History', 'Done'].map((f) => (
+                    <button
+                    key={f}
+                    onClick={() => setFilter(f as any)}
+                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all
+                        ${filter === f 
+                        ? 'bg-zinc-800 text-white shadow-sm' 
+                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
+                    >
+                    {f}
+                    </button>
+                ))}
             </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 pb-10 pr-2">
+        {filter === 'History' && (
+          <div className="grid grid-cols-2 gap-4 mb-6 animate-slide-up">
+            <div className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl text-center group">
+               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                  <Check className="w-5 h-5 text-emerald-400" />
+               </div>
+               <p className="text-2xl font-black text-white">{historyStats.completed}</p>
+               <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Finished</p>
+            </div>
+            <div className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl text-center group">
+               <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center mx-auto mb-3 border border-rose-500/20 group-hover:scale-110 transition-transform">
+                  <X className="w-5 h-5 text-rose-400" />
+               </div>
+               <p className="text-2xl font-black text-white">{historyStats.missed}</p>
+               <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Not Done</p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-3 relative min-h-[200px]">
             {isLoading && (
                 <div className="absolute inset-0 flex items-start justify-center pt-20 bg-black/50 z-10 backdrop-blur-sm rounded-xl">
@@ -218,17 +227,17 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
                 <div className="flex-1 min-w-0">
                     <h3 className={`font-medium text-base text-white truncate transition-all ${task.status === TaskStatus.DONE ? 'line-through text-zinc-500' : ''}`}>{task.title}</h3>
                     <div className="flex items-center gap-4 text-xs text-zinc-500 mt-1">
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/5">
-                            <Tag className="w-3 h-3 text-nexus-electric" /> {task.subject}
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/5 uppercase font-bold tracking-widest text-[9px]">
+                            {task.subject}
                         </span>
-                        {task.dueDate && (
-                            <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {formatDueDate(task.dueDate)}</span>
+                        {filter !== 'Today' && (
+                           <span className="text-[10px] font-medium opacity-50">{new Date(task.createdAt).toLocaleDateString()}</span>
                         )}
                     </div>
                 </div>
 
                 <div className={`
-                px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border
+                px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border
                 ${task.priority === TaskPriority.HIGH ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 
                     task.priority === TaskPriority.MEDIUM ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
                     'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}
@@ -242,9 +251,18 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
             </div>
             ))}
             {!isLoading && filteredTasks.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-24 text-zinc-600 border border-dashed border-white/5 rounded-3xl bg-zinc-900/10">
-                <Filter className="w-12 h-12 mb-4 opacity-20" />
-                <p className="text-sm">No tasks found.</p>
+            <div className="flex flex-col items-center justify-center py-24 text-zinc-600 border border-dashed border-white/5 rounded-[2rem] bg-zinc-900/10">
+                {filter === 'Today' ? (
+                  <>
+                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-4"><Check className="w-6 h-6 text-zinc-700" /></div>
+                    <p className="text-sm font-medium">All tasks finished for today!</p>
+                  </>
+                ) : (
+                  <>
+                    <Filter className="w-12 h-12 mb-4 opacity-20" />
+                    <p className="text-sm">No tasks found here.</p>
+                  </>
+                )}
             </div>
             )}
         </div>
@@ -257,33 +275,33 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
             <h2 className="text-2xl font-bold text-white mb-6">Create Task</h2>
             <form onSubmit={addTask} className="space-y-5">
               <div>
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Title</label>
-                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Study for Finals" />
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Task Name</label>
+                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Read Physics Chapter 1" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Subject</label>
-                  <input name="subject" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Math" />
+                  <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Subject</label>
+                  <input name="subject" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Physics" />
                 </div>
                 <div>
-                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Priority</label>
-                   <select name="priority" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none">
-                     <option value={TaskPriority.HIGH}>High Priority</option>
-                     <option value={TaskPriority.MEDIUM}>Medium Priority</option>
-                     <option value={TaskPriority.LOW}>Low Priority</option>
+                   <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Priority</label>
+                   <select name="priority" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none cursor-pointer">
+                     <option value={TaskPriority.MEDIUM}>Normal</option>
+                     <option value={TaskPriority.HIGH}>Urgent</option>
+                     <option value={TaskPriority.LOW}>Low</option>
                    </select>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Due Date</label>
+                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Deadline</label>
                     <input name="dueDate" type="datetime-local" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all [color-scheme:dark]" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Reminder</label>
+                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Reminder</label>
                     <div className="relative">
-                        <select name="reminderOffset" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none">
+                        <select name="reminderOffset" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none cursor-pointer">
                             {REMINDER_OPTIONS.map(opt => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
@@ -295,7 +313,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
 
               <div className="flex justify-end gap-3 mt-8">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-zinc-400 hover:text-white font-medium transition-colors hover:bg-white/5 rounded-xl">Cancel</button>
-                <button type="submit" className="px-6 py-2.5 bg-nexus-electric text-white font-bold rounded-xl transition-all shadow-lg shadow-nexus-electric/20 active:scale-95">Create Task</button>
+                <button type="submit" className="px-6 py-2.5 bg-white text-black font-bold rounded-xl transition-all shadow-lg active:scale-95">Save Task</button>
               </div>
             </form>
           </div>

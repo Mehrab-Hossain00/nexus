@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Users, Plus, MessageSquare, 
@@ -9,10 +10,7 @@ import { dbService } from '../services/dbService.ts';
 import { collection, query, orderBy, onSnapshot, addDoc, doc } from 'firebase/firestore';
 import { db } from '../services/firebase.ts';
 
-interface GroupsProps {
-  user: UserProfile;
-}
-
+// Component for manually logging study sessions into history from the groups view
 export const TaskManagerManualEntry = ({ user, onAdd }: { user: UserProfile, onAdd: () => void }) => {
     const handleAdd = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -50,6 +48,11 @@ export const TaskManagerManualEntry = ({ user, onAdd }: { user: UserProfile, onA
         </form>
     );
 };
+
+// Interface for Groups component props
+interface GroupsProps {
+  user: UserProfile;
+}
 
 export const Groups: React.FC<GroupsProps> = ({ user }) => {
   const [activeGroup, setActiveGroup] = useState<StudyGroup | null>(null);
@@ -105,11 +108,12 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
     setLoadingMemberStats(true);
     try {
         const today = new Date().toISOString().split('T')[0];
-        const [sessions, tasks] = await Promise.all([
-            dbService.getSessions(uid, today),
+        const [allSessions, tasks] = await Promise.all([
+            dbService.getSessions(uid),
             dbService.getTasks(uid)
         ]);
         
+        const sessions = allSessions.filter(s => s.date === today);
         const totalMinsToday = sessions.reduce((acc, s) => acc + s.duration, 0) / 60;
         const hoursToday = (totalMinsToday / 60).toFixed(1);
         
