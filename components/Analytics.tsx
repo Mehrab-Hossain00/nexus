@@ -19,7 +19,7 @@ const getThemeColor = () => getComputedStyle(document.documentElement).getProper
 export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [timeRange, setTimeRange] = useState<TimeRange>('Weekly');
+  const [timeRange, setTimeRange] = useState<TimeRange>('Daily');
   const [loading, setLoading] = useState(true);
   const [accentColor, setAccentColor] = useState('#7C3AED');
   
@@ -48,26 +48,29 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
     loadData();
   }, [user.uid]);
 
-  const dailyStats = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const todaySessions = sessions.filter(s => s.date === todayStr);
-    const todayTasks = tasks.filter(t => {
-      const taskDate = new Date(t.createdAt).toISOString().split('T')[0];
-      return taskDate === todayStr;
-    });
+  const activeStats = useMemo(() => {
+    const now = Date.now();
+    let durationMs = 0;
+    if (timeRange === 'Daily') durationMs = 24 * 60 * 60 * 1000;
+    else if (timeRange === 'Weekly') durationMs = 7 * 24 * 60 * 60 * 1000;
+    else if (timeRange === 'Monthly') durationMs = 30 * 24 * 60 * 60 * 1000;
+    else durationMs = 365 * 24 * 60 * 60 * 1000;
 
-    const totalSecs = todaySessions.reduce((acc, s) => acc + s.duration, 0);
-    const doneTasks = todayTasks.filter(t => t.status === TaskStatus.DONE).length;
+    const rangeSessions = sessions.filter(s => s.timestamp >= now - durationMs);
+    const rangeTasks = tasks.filter(t => t.createdAt >= now - durationMs);
+
+    const totalSecs = rangeSessions.reduce((acc, s) => acc + s.duration, 0);
+    const doneTasks = rangeTasks.filter(t => t.status === TaskStatus.DONE).length;
     
     return {
         totalHours: Number((totalSecs / 3600).toFixed(1)),
-        avgSession: todaySessions.length > 0 ? Math.round((totalSecs / todaySessions.length) / 60) : 0,
-        sessionCount: todaySessions.length,
-        taskEfficiency: todayTasks.length > 0 ? Math.round((doneTasks / todayTasks.length) * 100) : 0,
+        avgSession: rangeSessions.length > 0 ? Math.round((totalSecs / rangeSessions.length) / 60) : 0,
+        sessionCount: rangeSessions.length,
+        taskEfficiency: rangeTasks.length > 0 ? Math.round((doneTasks / rangeTasks.length) * 100) : 0,
         doneTasks,
-        pendingTasks: todayTasks.length - doneTasks
+        pendingTasks: rangeTasks.length - doneTasks
     };
-  }, [sessions, tasks]);
+  }, [sessions, tasks, timeRange]);
 
   const calendarDays = useMemo(() => {
     const year = currentCalendarDate.getFullYear();
@@ -126,6 +129,24 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
     return { filtered, totalSeconds, subjectBreakdown, title };
   }, [selectedDay, analysisTab, sessions, currentCalendarDate]);
 
+  const chartData = useMemo(() => {
+    const dayMap = new Map<string, number>();
+    sessions.forEach(s => {
+      dayMap.set(s.date, (dayMap.get(s.date) || 0) + s.duration / 60);
+    });
+
+    return Array.from(dayMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-10)
+      .map(([date, mins]) => {
+        const d = new Date(date);
+        return {
+          label: d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+          minutes: Math.round(mins)
+        };
+      });
+  }, [sessions]);
+
   const changeMonth = (dir: 'prev' | 'next') => {
     const d = new Date(currentCalendarDate);
     d.setMonth(currentCalendarDate.getMonth() + (dir === 'next' ? 1 : -1));
@@ -137,10 +158,10 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
          <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">Study Stats</h1>
-            <p className="text-zinc-500 text-sm mt-1">Review your daily progress and study habits.</p>
+            <p className="text-zinc-500 text-sm mt-1">Check your study progress and trends.</p>
          </div>
          <div className="flex bg-zinc-900/40 p-1 rounded-xl border border-white/5 backdrop-blur-md">
-            {(['Daily', 'Weekly', 'Monthly'] as TimeRange[]).map(r => (
+            {(['Daily', 'Weekly', 'Monthly', 'Yearly'] as TimeRange[]).map(r => (
                 <button
                     key={r}
                     onClick={() => setTimeRange(r)}
@@ -153,10 +174,10 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard icon={Clock} value={`${dailyStats.totalHours}h`} label="Time Today" color="text-nexus-electric" />
-          <StatCard icon={Activity} value={`${dailyStats.avgSession}m`} label="Avg Session" color="text-nexus-violet" />
-          <StatCard icon={Target} value={`${dailyStats.taskEfficiency}%`} label="Tasks Done" color="text-emerald-400" />
-          <StatCard icon={Zap} value={dailyStats.sessionCount} label="Sessions" color="text-rose-400" />
+          <StatCard icon={Clock} value={`${activeStats.totalHours}h`} label={timeRange === 'Daily' ? "Time Today" : "Total Time"} color="text-nexus-electric" />
+          <StatCard icon={Activity} value={`${activeStats.avgSession}m`} label="Avg Session" color="text-nexus-violet" />
+          <StatCard icon={Target} value={`${activeStats.taskEfficiency}%`} label="Tasks Done" color="text-emerald-400" />
+          <StatCard icon={Zap} value={activeStats.sessionCount} label="Sessions" color="text-rose-400" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -171,7 +192,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
             
             <div className="flex-1 relative z-10">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={sessions.slice(-14).map(s => ({ label: s.date.split('-').slice(1).join('/'), minutes: s.duration / 60 }))}>
+                    <AreaChart data={chartData}>
                         <defs>
                             <linearGradient id="progressionGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor={accentColor} stopOpacity={0.3}/>
@@ -195,21 +216,21 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
             <div className="mb-6 relative z-10">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                     <Target className="w-5 h-5 text-emerald-400" />
-                    Task Progress
+                    Task Completion
                 </h3>
             </div>
             <div className="flex-1 flex flex-col items-center justify-center relative z-10">
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <div className="text-center">
-                        <div className="text-4xl font-black text-white tracking-tighter">{dailyStats.taskEfficiency}%</div>
-                        <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Today's Goal</div>
+                        <div className="text-4xl font-black text-white tracking-tighter">{activeStats.taskEfficiency}%</div>
+                        <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Success Rate</div>
                     </div>
                 </div>
                 <div className="w-full h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
-                                data={[ { name: 'Finished', value: dailyStats.doneTasks }, { name: 'Remaining', value: dailyStats.pendingTasks || 1 } ]}
+                                data={[ { name: 'Finished', value: activeStats.doneTasks }, { name: 'Remaining', value: activeStats.pendingTasks || 1 } ]}
                                 cx="50%" cy="50%" innerRadius={65} outerRadius={85} paddingAngle={8} dataKey="value" stroke="none"
                             >
                                 <Cell fill={accentColor} />
@@ -229,7 +250,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
                             <CalendarIcon className="w-5 h-5 text-nexus-electric" />
                             Study Calendar
                         </h3>
-                        <p className="text-xs text-zinc-500 mt-1 uppercase font-bold tracking-widest">Your History</p>
+                        <p className="text-xs text-zinc-500 mt-1 uppercase font-bold tracking-widest">History</p>
                     </div>
                     <div className="flex items-center gap-4 bg-black/40 p-1 rounded-xl border border-white/5 shadow-inner">
                         <button onClick={() => changeMonth('prev')} className="p-2 hover:bg-white/5 text-zinc-400 rounded-lg transition-all"><ChevronLeft className="w-4 h-4" /></button>
@@ -296,7 +317,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
                 <div className="flex-1 space-y-8 overflow-y-auto custom-scrollbar pr-2">
                     {analysisData?.subjectBreakdown.length ? (
                         <div className="space-y-6">
-                            <h5 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em] mb-4">Subjects Studied</h5>
+                            <h5 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em] mb-4">Study Logs</h5>
                             {analysisData.subjectBreakdown.map((sub, i) => (
                                 <div key={sub.name} className="space-y-2 animate-slide-up" style={{ animationDelay: `${i * 80}ms` }}>
                                     <div className="flex justify-between items-end">
@@ -320,7 +341,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-30">
                             <Search className="w-12 h-12 text-zinc-500" />
-                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">No sessions found</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.4em]">No study logs found</p>
                         </div>
                     )}
                 </div>

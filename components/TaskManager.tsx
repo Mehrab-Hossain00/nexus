@@ -17,6 +17,7 @@ const REMINDER_OPTIONS = [
 export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<'Today' | 'History' | 'Done'>('Today');
+  const [historyPeriod, setHistoryPeriod] = useState<'Week' | 'Month' | 'All'>('Week');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +34,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
         const fetchedTasks = await dbService.getTasks(user.uid);
         setTasks(fetchedTasks);
       } catch (err: any) {
-        setError(`Cloud error: ${err.code || 'Sync failed'}`);
+        setError(`Sync error: ${err.code || 'Sync failed'}`);
       } finally {
         setIsLoading(false);
       }
@@ -116,11 +117,21 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
 
   const historyStats = useMemo(() => {
     const todayStr = new Date().toISOString().split('T')[0];
-    const pastTasks = tasks.filter(t => new Date(t.createdAt).toISOString().split('T')[0] !== todayStr);
+    const now = Date.now();
+    let ms = 0;
+    if (historyPeriod === 'Week') ms = 7 * 24 * 60 * 60 * 1000;
+    else if (historyPeriod === 'Month') ms = 30 * 24 * 60 * 60 * 1000;
+    else ms = Infinity;
+
+    const pastTasks = tasks.filter(t => {
+        const taskDate = new Date(t.createdAt).toISOString().split('T')[0];
+        return taskDate !== todayStr && (ms === Infinity || t.createdAt >= now - ms);
+    });
+    
     const completed = pastTasks.filter(t => t.status === TaskStatus.DONE).length;
     const missed = pastTasks.filter(t => t.status === TaskStatus.PENDING).length;
     return { completed, missed };
-  }, [tasks]);
+  }, [tasks, historyPeriod]);
 
   return (
     <div className="h-full flex flex-col animate-fade-in relative">
@@ -135,8 +146,8 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       <div className="shrink-0 space-y-8 pb-6">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Today's Tasks</h1>
-            <p className="text-zinc-500 text-sm mt-1">Get things done, one step at a time.</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight">Daily Tasks</h1>
+            <p className="text-zinc-500 text-sm mt-1">Manage your work for today.</p>
             </div>
             <button 
             onClick={() => setIsModalOpen(true)}
@@ -152,7 +163,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-nexus-electric transition-colors" />
                 <input 
                     type="text" 
-                    placeholder="Search your tasks..." 
+                    placeholder="Search tasks..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full bg-zinc-900/30 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-nexus-electric/50 transition-all shadow-inner"
@@ -177,20 +188,35 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
 
       <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 pb-10 pr-2">
         {filter === 'History' && (
-          <div className="grid grid-cols-2 gap-4 mb-6 animate-slide-up">
-            <div className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl text-center group">
-               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                  <Check className="w-5 h-5 text-emerald-400" />
-               </div>
-               <p className="text-2xl font-black text-white">{historyStats.completed}</p>
-               <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Finished</p>
+          <div className="space-y-4 mb-6 animate-slide-up">
+            <div className="flex justify-center">
+                <div className="flex bg-zinc-900/40 p-1 rounded-xl border border-white/5">
+                    {['Week', 'Month', 'All'].map(p => (
+                        <button 
+                            key={p} 
+                            onClick={() => setHistoryPeriod(p as any)}
+                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${historyPeriod === p ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                        >
+                            {p}
+                        </button>
+                    ))}
+                </div>
             </div>
-            <div className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl text-center group">
-               <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center mx-auto mb-3 border border-rose-500/20 group-hover:scale-110 transition-transform">
-                  <X className="w-5 h-5 text-rose-400" />
-               </div>
-               <p className="text-2xl font-black text-white">{historyStats.missed}</p>
-               <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Not Done</p>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl text-center group">
+                   <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                      <Check className="w-5 h-5 text-emerald-400" />
+                   </div>
+                   <p className="text-2xl font-black text-white">{historyStats.completed}</p>
+                   <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Finished</p>
+                </div>
+                <div className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl text-center group">
+                   <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center mx-auto mb-3 border border-rose-500/20 group-hover:scale-110 transition-transform">
+                      <X className="w-5 h-5 text-rose-400" />
+                   </div>
+                   <p className="text-2xl font-black text-white">{historyStats.missed}</p>
+                   <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Not Done</p>
+                </div>
             </div>
           </div>
         )}
@@ -255,12 +281,12 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
                 {filter === 'Today' ? (
                   <>
                     <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-4"><Check className="w-6 h-6 text-zinc-700" /></div>
-                    <p className="text-sm font-medium">All tasks finished for today!</p>
+                    <p className="text-sm font-medium">All clear for today!</p>
                   </>
                 ) : (
                   <>
                     <Filter className="w-12 h-12 mb-4 opacity-20" />
-                    <p className="text-sm">No tasks found here.</p>
+                    <p className="text-sm">No tasks found.</p>
                   </>
                 )}
             </div>
@@ -272,11 +298,11 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-md bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-nexus-electric to-nexus-violet" />
-            <h2 className="text-2xl font-bold text-white mb-6">Create Task</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">New Task</h2>
             <form onSubmit={addTask} className="space-y-5">
               <div>
-                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Task Name</label>
-                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Read Physics Chapter 1" />
+                <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Name</label>
+                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Study Physics" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -286,8 +312,8 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
                 <div>
                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Priority</label>
                    <select name="priority" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none cursor-pointer">
-                     <option value={TaskPriority.MEDIUM}>Normal</option>
-                     <option value={TaskPriority.HIGH}>Urgent</option>
+                     <option value={TaskPriority.MEDIUM}>Medium</option>
+                     <option value={TaskPriority.HIGH}>High</option>
                      <option value={TaskPriority.LOW}>Low</option>
                    </select>
                 </div>
@@ -295,7 +321,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
               
               <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Deadline</label>
+                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Due Date</label>
                     <input name="dueDate" type="datetime-local" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all [color-scheme:dark]" />
                   </div>
                   <div>
@@ -313,7 +339,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
 
               <div className="flex justify-end gap-3 mt-8">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-zinc-400 hover:text-white font-medium transition-colors hover:bg-white/5 rounded-xl">Cancel</button>
-                <button type="submit" className="px-6 py-2.5 bg-white text-black font-bold rounded-xl transition-all shadow-lg active:scale-95">Save Task</button>
+                <button type="submit" className="px-6 py-2.5 bg-white text-black font-bold rounded-xl transition-all shadow-lg active:scale-95">Add Task</button>
               </div>
             </form>
           </div>
