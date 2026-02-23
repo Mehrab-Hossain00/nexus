@@ -36,8 +36,11 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
   const [isAddingSubject, setIsAddingSubject] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState('');
   const [showConfig, setShowConfig] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [editSettings, setEditSettings] = useState(settings);
+  const [manualData, setManualData] = useState({ duration: 30, subject: subjects[0] || 'Math' });
+  const [isSubmittingManual, setIsSubmittingManual] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('nexus_timer_settings', JSON.stringify(settings));
@@ -110,6 +113,39 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
     setShowConfig(false);
     if (!globalTimer.isActive && globalTimer.type === 'pomodoro') {
       globalTimer.reset(editSettings[globalTimer.mode] * 60);
+    }
+  };
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (manualData.duration <= 0) return;
+    
+    setIsSubmittingManual(true);
+    try {
+      const session = {
+        id: crypto.randomUUID(),
+        userId: user.uid,
+        subject: manualData.subject,
+        duration: manualData.duration * 60, // store in seconds
+        timestamp: Date.now(),
+        date: new Date().toISOString().split('T')[0]
+      };
+      
+      await dbService.logSession(session);
+      await dbService.logActivity({ 
+        userId: user.uid, 
+        userName: user.name, 
+        type: 'manual_session_added', 
+        subject: manualData.subject,
+        duration: manualData.duration * 60
+      });
+      
+      setShowManual(false);
+      setManualData({ ...manualData, duration: 30 });
+    } catch (error) {
+      console.error("Failed to log manual session:", error);
+    } finally {
+      setIsSubmittingManual(false);
     }
   };
 
@@ -217,10 +253,10 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest text-center">Active Subject</p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {subjects.map(s => (
-                        <button key={s} onClick={() => globalTimer.setSubject(s)} className={`py-2.5 rounded-xl text-xs font-medium border transition-all flex items-center justify-center relative group ${globalTimer.subject === s ? 'bg-nexus-electric/20 border-nexus-electric text-white' : 'bg-zinc-900/40 border-white/5 text-zinc-500'}`}>
+                        <div key={s} onClick={() => globalTimer.setSubject(s)} className={`py-2.5 rounded-xl text-xs font-medium border transition-all flex items-center justify-center relative group cursor-pointer ${globalTimer.subject === s ? 'bg-nexus-electric/20 border-nexus-electric text-white' : 'bg-zinc-900/40 border-white/5 text-zinc-500'}`}>
                             <span className="truncate px-2">{s}</span>
                             {subjects.length > 1 && <button onClick={(e) => deleteSubject(e, s)} className="absolute -top-1 -right-1 p-1 bg-zinc-800 border border-white/10 rounded-full text-zinc-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-2.5 h-2.5" /></button>}
-                        </button>
+                        </div>
                     ))}
                     {isAddingSubject ? (
                       <form onSubmit={addSubject} className="flex"><input autoFocus value={newSubjectName} onChange={(e) => setNewSubjectName(e.target.value)} onBlur={() => { if (!newSubjectName.trim()) setIsAddingSubject(false); else addSubject(); }} placeholder="Name..." className="w-full py-2.5 bg-zinc-900/40 border border-nexus-electric/50 rounded-xl text-xs text-white px-3 outline-none" /></form>
@@ -254,11 +290,59 @@ export const FocusTimer: React.FC<FocusTimerProps> = ({ user, subjects, setSubje
         <div className="flex items-center gap-8 shrink-0">
             <button onClick={handleReset} className="w-16 h-16 rounded-full bg-zinc-900 border border-white/5 text-zinc-500 flex items-center justify-center hover:text-white transition-colors active:scale-90" title="Reset Session"><RotateCcw className="w-5 h-5" /></button>
             <button onClick={toggleTimer} className="w-24 h-24 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.2)] active:scale-90 transition-transform">{globalTimer.isActive ? <Pause className="w-10 h-10 fill-black" /> : <Play className="w-10 h-10 fill-black ml-1" />}</button>
-            {(globalTimer.isActive || (!isPomodoro && globalTimer.timeValue > 0)) && (
+            {(globalTimer.isActive || (!isPomodoro && globalTimer.timeValue > 0)) ? (
                 <button onClick={() => globalTimer.manualEnd()} className="w-16 h-16 rounded-full bg-nexus-electric/10 border border-nexus-electric/20 text-nexus-electric flex items-center justify-center hover:bg-nexus-electric hover:text-white transition-all active:scale-90 group" title="Finish and Save Progress"><FastForward className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" /></button>
+            ) : (
+                <button onClick={() => setShowManual(true)} className="w-16 h-16 rounded-full bg-zinc-900 border border-white/5 text-zinc-500 flex items-center justify-center hover:text-white transition-colors active:scale-90" title="Add Manual Session"><Plus className="w-5 h-5" /></button>
             )}
         </div>
       </div>
+
+      {showManual && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-nexus-electric to-emerald-500" />
+             <div className="flex justify-between items-center mb-8">
+                 <h3 className="text-xl font-bold text-white flex items-center gap-2"><Plus className="w-5 h-5 text-nexus-electric" />Log Manual Session</h3>
+                 <button onClick={() => setShowManual(false)} className="text-zinc-500 hover:text-white"><X className="w-5 h-5" /></button>
+             </div>
+             <form onSubmit={handleManualSubmit} className="space-y-6">
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Subject</label>
+                        <select 
+                          value={manualData.subject} 
+                          onChange={e => setManualData({ ...manualData, subject: e.target.value })}
+                          className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-nexus-electric outline-none appearance-none"
+                        >
+                          {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Duration (Minutes)</label>
+                        <div className="flex items-center gap-3">
+                            <input 
+                              type="number" 
+                              min="1"
+                              max="1440"
+                              value={manualData.duration} 
+                              onChange={e => setManualData({ ...manualData, duration: parseInt(e.target.value) || 0 })} 
+                              className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric outline-none font-mono" 
+                            />
+                        </div>
+                    </div>
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={isSubmittingManual}
+                  className="w-full py-4 bg-white text-black font-bold rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-50"
+                >
+                  {isSubmittingManual ? 'Saving...' : <><Check className="w-4 h-4" /> Save Session</>}
+                </button>
+             </form>
+          </div>
+        </div>
+      )}
 
       {showConfig && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
