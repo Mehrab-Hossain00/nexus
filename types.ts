@@ -7,7 +7,9 @@ export enum AppView {
   TUTOR = 'TUTOR',
   ANALYTICS = 'ANALYTICS',
   HUB = 'HUB',
-  SETTINGS = 'SETTINGS'
+  SETTINGS = 'SETTINGS',
+  SHOP = 'SHOP',
+  ACHIEVEMENTS = 'ACHIEVEMENTS'
 }
 
 export type UserStatus = 'online' | 'offline' | 'studying' | 'break';
@@ -36,10 +38,15 @@ export interface UserProfile {
   dailyGoalMinutes?: number;
   lastActivity?: number;
   xp?: number;
+  level?: number;
+  credits?: number;
   streak?: number;
+  streakFreezeCount?: number;
+  unlockedThemes?: AppTheme[];
+  badges?: string[]; // IDs of earned badges
+  dailyQuests?: DailyQuest[];
+  lastActiveDate?: string;
   theme?: AppTheme;
-  friends?: string[]; // Array of UIDs
-  friendRequests?: { from: string; name: string; avatar: string }[];
 }
 
 export interface ChatMessage {
@@ -58,45 +65,6 @@ export interface ChatSession {
   createdAt: number;
   updatedAt: number;
   messages: ChatMessage[];
-}
-
-export interface Reaction {
-  emoji: string;
-  count: number;
-  uids: string[];
-}
-
-export interface PostComment {
-  id: string;
-  userId: string;
-  userName: string;
-  userAvatar: string;
-  text: string;
-  timestamp: number;
-}
-
-export interface SocialPost {
-  id: string;
-  userId: string;
-  userName: string;
-  userAvatar: string;
-  type: 'manual' | 'session_complete' | 'achievement';
-  content: string;
-  imageUrl?: string;
-  subject?: string;
-  duration?: number; 
-  timestamp: number;
-  reactions: Reaction[];
-  commentCount: number;
-}
-
-export interface DirectMessage {
-  id: string;
-  senderId: string;
-  receiverId: string;
-  text: string;
-  timestamp: number;
-  seen?: boolean;
 }
 
 export interface StudyGroup {
@@ -143,6 +111,36 @@ export interface ScheduleEvent {
   description?: string;
 }
 
+export interface DailyQuest {
+  id: string;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  rewardXp: number;
+  rewardCredits: number;
+  completed: boolean;
+  type: 'study_time' | 'tasks_done' | 'pomodoro_count';
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  requirement: number;
+  type: 'sessions' | 'tasks' | 'streak' | 'level';
+}
+
+export interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  type: 'theme' | 'booster' | 'streak_freeze';
+  value?: string; // theme id or multiplier value
+}
+
 export interface ActivityLog {
   id: string;
   userId: string;
@@ -155,6 +153,7 @@ export interface ActivityLog {
 
 export interface GroupMessage {
   id: string;
+  groupId?: string;
   senderId: string;
   senderName: string;
   text: string;

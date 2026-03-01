@@ -5,6 +5,8 @@ import { dbService } from '../services/dbService';
 
 interface TaskManagerProps {
     user: UserProfile;
+    onTriggerXP: (amount: number, x?: number, y?: number) => void;
+    onUpdateQuest: (type: 'study_time' | 'tasks_done' | 'pomodoro_count', amount: number) => void;
 }
 
 const REMINDER_OPTIONS = [
@@ -14,7 +16,7 @@ const REMINDER_OPTIONS = [
     { label: '1 day before', value: 1440 },
 ];
 
-export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
+export const TaskManager: React.FC<TaskManagerProps> = ({ user, onTriggerXP, onUpdateQuest }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<'Today' | 'History' | 'Done'>('Today');
   const [historyPeriod, setHistoryPeriod] = useState<'Week' | 'Month' | 'All'>('Week');
@@ -40,7 +42,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
       }
   };
 
-  const toggleStatus = async (id: string) => {
+  const toggleStatus = async (id: string, e: React.MouseEvent) => {
     const originalTasks = [...tasks];
     const task = tasks.find(t => t.id === id);
     if (!task) return;
@@ -50,6 +52,15 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
     
     try {
       await dbService.updateTaskStatus(id, newStatus);
+      if (newStatus === TaskStatus.DONE) {
+        const xp = task.priority === TaskPriority.HIGH ? 50 : task.priority === TaskPriority.MEDIUM ? 30 : 15;
+        
+        // Calculate position for XP popup
+        const rect = (e.target as HTMLElement).getBoundingClientRect();
+        onTriggerXP(xp, rect.left, rect.top);
+        
+        onUpdateQuest('tasks_done', 1);
+      }
     } catch (err) {
       setTasks(originalTasks);
       setError("Update failed.");
@@ -239,7 +250,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user }) => {
                 `}
             >
                 <button 
-                    onClick={() => toggleStatus(task.id)} 
+                    onClick={(e) => toggleStatus(task.id, e)} 
                     className={`
                         w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-300 active:scale-90
                         ${task.status === TaskStatus.DONE 

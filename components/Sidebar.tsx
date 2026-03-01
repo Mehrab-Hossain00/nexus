@@ -14,7 +14,10 @@ import {
   Settings,
   Share2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ShoppingBag,
+  Award,
+  Users
 } from 'lucide-react';
 import { AppView, UserProfile } from '../types.ts';
 
@@ -39,7 +42,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
     { view: AppView.TASKS, icon: CheckSquare, label: 'Tasks' },
     { view: AppView.SCHEDULE, icon: Calendar, label: 'Schedule' },
     { view: AppView.TIMER, icon: Clock, label: 'Timer' },
-    { view: AppView.HUB, icon: Share2, label: 'Social' },
+    { view: AppView.HUB, icon: Users, label: 'Groups' },
+    { view: AppView.SHOP, icon: ShoppingBag, label: 'Shop' },
+    { view: AppView.ACHIEVEMENTS, icon: Award, label: 'Badges' },
     { view: AppView.TUTOR, icon: BrainCircuit, label: 'AI Help' },
     { view: AppView.ANALYTICS, icon: BarChart2, label: 'Stats' },
     { view: AppView.SETTINGS, icon: Settings, label: 'Settings' },

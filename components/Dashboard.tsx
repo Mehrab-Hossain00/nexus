@@ -8,9 +8,11 @@ import { db } from '../services/firebase.ts';
 interface DashboardProps {
   user: UserProfile;
   onViewChange: (view: AppView) => void;
+  onTriggerXP: (amount: number, x?: number, y?: number) => void;
+  onUpdateQuest: (type: 'study_time' | 'tasks_done' | 'pomodoro_count', amount: number) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange, onTriggerXP, onUpdateQuest }) => {
   const [stats, setStats] = useState({ pending: 0, done: 0, eventsToday: 0, total: 0 });
   const [nextEvent, setNextEvent] = useState<ScheduleEvent | null>(null);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
@@ -101,13 +103,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
           <p className="text-nexus-slate text-sm font-medium mt-1">Welcome back to your high-performance workspace.</p>
         </div>
         <div className="flex items-center gap-3">
+            <div className="glass px-4 py-2 rounded-xl flex flex-col gap-1 border-white/10 min-w-[120px]">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-nexus-electric fill-nexus-electric" />
+                  <span className="text-sm font-bold text-white">LVL {user.level || 1}</span>
+                </div>
+                <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-nexus-electric" 
+                    style={{ width: `${((user.xp || 0) % 1000) / 10}%` }} 
+                  />
+                </div>
+            </div>
             <div className="glass px-4 py-2 rounded-xl flex items-center gap-2 border-white/10">
                 <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
                 <span className="text-sm font-bold text-white">{user.streak || 0} Day Streak</span>
             </div>
             <div className="glass px-4 py-2 rounded-xl flex items-center gap-2 border-white/10">
-                <Trophy className="w-4 h-4 text-nexus-violet" />
-                <span className="text-sm font-bold text-white">{user.xp || 0} XP</span>
+                <Sparkles className="w-4 h-4 text-nexus-violet fill-nexus-violet" />
+                <span className="text-sm font-bold text-white">{user.credits || 0} Credits</span>
             </div>
         </div>
       </header>
@@ -197,20 +211,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange }) => {
         <div className="col-span-12 md:col-span-4 row-span-4 glass-card rounded-[2.5rem] p-8 flex flex-col">
            <div className="flex justify-between items-center mb-8">
               <h3 className="text-lg font-black text-white flex items-center gap-3">
-                 <Activity className="w-5 h-5 text-nexus-electric" />
-                 Activity Stream
+                 <Sparkles className="w-5 h-5 text-nexus-electric" />
+                 Daily Quests
               </h3>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
            </div>
            <div className="flex-1 space-y-4 overflow-hidden">
-             {activities.map((act, i) => (
-               <div key={act.id} className="flex items-center gap-4 p-4 glass rounded-3xl hover:bg-white/5 transition-all border-white/5 group" style={{ animationDelay: `${i * 100}ms` }}>
-                  <div className="w-10 h-10 rounded-xl bg-nexus-black border border-white/5 flex items-center justify-center group-hover:border-nexus-electric transition-all">
-                     <Brain className="w-5 h-5 text-nexus-violet" />
+             {(user.dailyQuests || []).map((quest, i) => (
+               <div key={quest.id} className={`p-4 rounded-3xl border transition-all ${quest.completed ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-white/5 border-white/5'}`}>
+                  <div className="flex justify-between items-start mb-2">
+                     <p className={`text-xs font-bold ${quest.completed ? 'text-emerald-400' : 'text-white'}`}>{quest.title}</p>
+                     {quest.completed && <Check className="w-4 h-4 text-emerald-400" />}
                   </div>
-                  <div className="flex-1 min-w-0">
-                     <p className="text-sm text-white font-bold truncate group-hover:text-nexus-electric transition-colors">{act.userName}</p>
-                     <p className="text-[10px] text-nexus-slate font-black uppercase tracking-widest mt-0.5">{act.type.replace('_', ' ')} • {act.subject || 'Core'}</p>
+                  <p className="text-[10px] text-nexus-slate mb-3">{quest.description}</p>
+                  <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
+                     <div 
+                        className={`h-full transition-all duration-1000 ${quest.completed ? 'bg-emerald-500' : 'bg-nexus-electric'}`}
+                        style={{ width: `${(quest.current / quest.target) * 100}%` }}
+                     />
+                  </div>
+                  <div className="flex justify-between mt-2">
+                     <span className="text-[9px] font-bold text-nexus-slate">{quest.current}/{quest.target}</span>
+                     <span className="text-[9px] font-bold text-nexus-electric">+{quest.rewardXp} XP</span>
                   </div>
                </div>
              ))}

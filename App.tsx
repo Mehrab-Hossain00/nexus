@@ -8,12 +8,24 @@ import { FocusTimer } from './components/FocusTimer.tsx';
 import { AITutor } from './components/AITutor.tsx';
 import { Analytics } from './components/Analytics.tsx';
 import { NexusHub } from './components/NexusHub.tsx';
+import { NexusShop } from './components/NexusShop.tsx';
+import { Achievements } from './components/Achievements.tsx';
 import { Login } from './components/Login.tsx';
 import { CommandPalette } from './components/CommandPalette.tsx';
+import { GamificationOverlay } from './components/GamificationOverlay.tsx';
 import { authService } from './services/authService.ts';
 import { dbService } from './services/dbService.ts';
-import { AppView, UserProfile, AppTheme } from './types.ts';
-import { BellRing, X, User as UserIcon, Check, Sparkles, Target, Palette, Moon, Sun, Monitor, Zap } from 'lucide-react';
+import { increment, query, collection, orderBy, limit, getDocs } from 'firebase/firestore';
+import { db } from './services/firebase.ts';
+import { AppView, UserProfile, AppTheme, DailyQuest } from './types.ts';
+import { BellRing, X, User as UserIcon, Check, Sparkles, Target, Palette, Moon, Sun, Monitor, Zap, ShoppingBag, Award } from 'lucide-react';
+
+const XP_PER_LEVEL = 1000;
+const INITIAL_DAILY_QUESTS: DailyQuest[] = [
+  { id: 'q1', title: 'Deep Focus', description: 'Study for 60 minutes', target: 60, current: 0, rewardXp: 100, rewardCredits: 50, completed: false, type: 'study_time' },
+  { id: 'q2', title: 'Task Master', description: 'Complete 3 tasks', target: 3, current: 0, rewardXp: 150, rewardCredits: 75, completed: false, type: 'tasks_done' },
+  { id: 'q3', title: 'Pomodoro Streak', description: 'Complete 4 Pomodoros', target: 4, current: 0, rewardXp: 200, rewardCredits: 100, completed: false, type: 'pomodoro_count' },
+];
 
 const DEFAULT_SUBJECTS = ["Math", "Physics", "Chemistry", "Biology"];
 
@@ -49,6 +61,9 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<AppTheme>('default');
+  const [xpPopups, setXpPopups] = useState<{ id: string; amount: number; x: number; y: number }[]>([]);
+  const [levelUp, setLevelUp] = useState<{ level: number; rewards: { xp: number; credits: number } } | null>(null);
+  const [globalRankings, setGlobalRankings] = useState<UserProfile[]>([]);
 
   const [subjects, setSubjects] = useState<string[]>(() => {
     const saved = localStorage.getItem('nexus_subjects');
@@ -129,6 +144,114 @@ const App: React.FC = () => {
     window.addEventListener('beforeunload', handleUnload);
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, []);
+
+  const triggerXP = async (amount: number, x?: number, y?: number) => {
+    if (!user) return;
+    
+    const id = crypto.randomUUID();
+    setXpPopups(prev => [...prev, { id, amount, x: x || window.innerWidth / 2, y: y || window.innerHeight / 2 }]);
+    setTimeout(() => setXpPopups(prev => prev.filter(p => p.id !== id)), 2000);
+
+    const newXP = (user.xp || 0) + amount;
+    const currentLevel = user.level || 1;
+    const newLevel = Math.floor(newXP / XP_PER_LEVEL) + 1;
+
+    const updates: Partial<UserProfile> = { xp: newXP };
+    
+    if (newLevel > currentLevel) {
+      const rewards = { xp: newLevel * 100, credits: newLevel * 50 };
+      setLevelUp({ level: newLevel, rewards });
+      updates.level = newLevel;
+      updates.xp = newXP + rewards.xp;
+      updates.credits = (user.credits || 0) + rewards.credits;
+    }
+
+    setUser(prev => prev ? { ...prev, ...updates } : null);
+    await dbService.updateUserProfile(user.uid, updates);
+    checkAchievements();
+  };
+
+  const checkAchievements = async () => {
+    if (!user) return;
+    const badges = user.badges || [];
+    const newBadges = [...badges];
+    let changed = false;
+
+    // A1: Novice Scholar (1 session)
+    if (!badges.includes('a1')) {
+      const sessions = await dbService.getSessions(user.uid);
+      if (sessions.length >= 1) { newBadges.push('a1'); changed = true; }
+    }
+    // A2: Deep Diver (10 sessions)
+    if (!badges.includes('a2')) {
+      const sessions = await dbService.getSessions(user.uid);
+      if (sessions.length >= 10) { newBadges.push('a2'); changed = true; }
+    }
+    // A3: Task Ninja (20 tasks)
+    if (!badges.includes('a3')) {
+      const tasks = await dbService.getTasks(user.uid);
+      const done = tasks.filter(t => t.status === 'DONE').length;
+      if (done >= 20) { newBadges.push('a3'); changed = true; }
+    }
+    // A4: Unstoppable (7 day streak)
+    if (!badges.includes('a4') && (user.streak || 0) >= 7) {
+      newBadges.push('a4'); changed = true;
+    }
+    // A5: Nexus Sage (Level 10)
+    if (!badges.includes('a5') && (user.level || 1) >= 10) {
+      newBadges.push('a5'); changed = true;
+    }
+
+    if (changed) {
+      setUser(prev => prev ? { ...prev, badges: newBadges } : null);
+      await dbService.updateUserProfile(user.uid, { badges: newBadges });
+      triggerXP(500); // Bonus for any achievement
+    }
+  };
+
+  const fetchGlobalRankings = async () => {
+    try {
+      const q = query(collection(db, 'users'), orderBy('xp', 'desc'), limit(10));
+      const snap = await getDocs(q);
+      setGlobalRankings(snap.docs.map(d => d.data() as UserProfile));
+    } catch (err) {
+      console.error("Failed to fetch rankings:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (currentView === AppView.HUB) {
+      fetchGlobalRankings();
+    }
+  }, [currentView]);
+
+  const updateQuestProgress = async (type: DailyQuest['type'], amount: number) => {
+    if (!user || !user.dailyQuests) return;
+
+    let changed = false;
+    const newQuests = user.dailyQuests.map(q => {
+      if (q.type === type && !q.completed) {
+        const newCurrent = Math.min(q.target, q.current + amount);
+        if (newCurrent !== q.current) {
+          changed = true;
+          const completed = newCurrent >= q.target;
+          if (completed) {
+            triggerXP(q.rewardXp);
+            // Credits are handled in triggerXP via level up or separately
+            dbService.awardRewards(user.uid, 0, q.rewardCredits);
+            setUser(prev => prev ? { ...prev, credits: (prev.credits || 0) + q.rewardCredits } : null);
+          }
+          return { ...q, current: newCurrent, completed };
+        }
+      }
+      return q;
+    });
+
+    if (changed) {
+      setUser(prev => prev ? { ...prev, dailyQuests: newQuests } : null);
+      await dbService.updateDailyQuests(user.uid, newQuests);
+    }
+  };
 
   // Restore Timer State from LocalStorage
   useEffect(() => {
@@ -240,12 +363,23 @@ const App: React.FC = () => {
     if (timerType === 'pomodoro' && timerMode === 'focus' && user) {
         await saveSession(timerTotalTime);
         await dbService.updateUserStatus(user.uid, 'break');
+        
+        // Gamification: Award XP for completed Pomodoro
+        const xpAmount = Math.floor(timerTotalTime / 60) * 2; // 2 XP per minute
+        triggerXP(xpAmount);
+        updateQuestProgress('pomodoro_count', 1);
+        updateQuestProgress('study_time', Math.floor(timerTotalTime / 60));
     }
   };
 
   const saveSession = async (durationSecs: number) => {
     if (!user || durationSecs < 1) return;
     try {
+        const xpAmount = Math.floor(durationSecs / 60) * 2;
+        if (timerType === 'stopwatch') {
+          triggerXP(xpAmount);
+          updateQuestProgress('study_time', Math.floor(durationSecs / 60));
+        }
         await dbService.logSession({
             id: crypto.randomUUID(),
             userId: user.uid,
@@ -260,16 +394,6 @@ const App: React.FC = () => {
             type: 'session_completed',
             subject: timerSubject,
             duration: durationSecs
-        });
-        // NEW: Public post to the Hub
-        await dbService.createPost({
-          userId: user.uid,
-          userName: user.name,
-          userAvatar: user.avatar || '',
-          type: 'session_complete',
-          content: `${user.name} just completed a high-density ${Math.round(durationSecs / 60)}m focus session!`,
-          subject: timerSubject,
-          duration: durationSecs
         });
     } catch (err) {
         console.error("Failed to save session:", err);
@@ -350,8 +474,45 @@ const App: React.FC = () => {
     playFeedbackSound('stop');
   };
 
-  const handleLogin = (newUser: UserProfile) => {
-    setUser(newUser);
+  const handleLogin = async (newUser: UserProfile) => {
+    // Streak Logic
+    const today = new Date().toISOString().split('T')[0];
+    const lastActive = newUser.lastActiveDate || '';
+    let newStreak = newUser.streak || 0;
+    
+    if (lastActive) {
+      const lastDate = new Date(lastActive);
+      const todayDate = new Date(today);
+      const diffDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        newStreak += 1;
+      } else if (diffDays > 1) {
+        // Check for streak freeze
+        if ((newUser.streakFreezeCount || 0) > 0) {
+          await dbService.updateUserProfile(newUser.uid, { streakFreezeCount: increment(-1) as any });
+        } else {
+          newStreak = 1;
+        }
+      }
+    } else {
+      newStreak = 1;
+    }
+
+    const userWithGamification = {
+      ...newUser,
+      streak: newStreak,
+      lastActiveDate: today,
+      xp: newUser.xp || 0,
+      level: newUser.level || 1,
+      credits: newUser.credits || 0,
+      dailyQuests: newUser.dailyQuests || INITIAL_DAILY_QUESTS,
+      unlockedThemes: newUser.unlockedThemes || ['default']
+    };
+    
+    setUser(userWithGamification);
+    await dbService.updateUserProfile(newUser.uid, { streak: newStreak, lastActiveDate: today });
+
     if (newUser.theme) {
       setCurrentTheme(newUser.theme);
       document.body.setAttribute('data-theme', newUser.theme);
@@ -394,8 +555,8 @@ const App: React.FC = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case AppView.DASHBOARD: return <Dashboard user={user} onViewChange={setCurrentView} />;
-      case AppView.TASKS: return <TaskManager user={user} />;
+      case AppView.DASHBOARD: return <Dashboard user={user} onViewChange={setCurrentView} onTriggerXP={triggerXP} onUpdateQuest={updateQuestProgress} />;
+      case AppView.TASKS: return <TaskManager user={user} onTriggerXP={triggerXP} onUpdateQuest={updateQuestProgress} />;
       case AppView.SCHEDULE: return <SmartSchedule user={user} subjects={subjects} setSubjects={setSubjects} />;
       case AppView.TIMER: return (
         <FocusTimer 
@@ -421,7 +582,29 @@ const App: React.FC = () => {
           }} 
         />
       );
-      case AppView.HUB: return <NexusHub user={user} />;
+      case AppView.HUB: return <NexusHub user={user} globalRankings={globalRankings} />;
+      case AppView.SHOP: return (
+        <NexusShop 
+          user={user} 
+          onPurchase={(item) => {
+            // User state is updated inside NexusShop via dbService and onPurchase callback
+            // But we need to refresh the local user state to show new credits/themes
+            setUser(prev => {
+              if (!prev) return null;
+              const updates: any = { credits: prev.credits - item.price };
+              if (item.type === 'theme') {
+                updates.unlockedThemes = [...(prev.unlockedThemes || []), item.value];
+                // Also apply the theme immediately if it's a theme purchase
+                handleUpdateTheme(item.value as AppTheme);
+              } else if (item.type === 'streak_freeze') {
+                updates.streakFreezeCount = (prev.streakFreezeCount || 0) + 1;
+              }
+              return { ...prev, ...updates };
+            });
+          }} 
+        />
+      );
+      case AppView.ACHIEVEMENTS: return <Achievements user={user} />;
       case AppView.TUTOR: return <AITutor user={user} />;
       case AppView.ANALYTICS: return <Analytics user={user} />;
       case AppView.SETTINGS: return (
@@ -430,6 +613,33 @@ const App: React.FC = () => {
                   <h2 className="text-3xl font-bold text-white tracking-tight">System Configuration</h2>
                   <p className="text-zinc-500 text-sm mt-1">Manage your identity and visual experience.</p>
               </header>
+              <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-8 backdrop-blur-sm">
+                  <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                          <Target className="w-6 h-6 text-emerald-400" />
+                      </div>
+                      <div>
+                          <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-widest">Daily Objective</h3>
+                          <p className="text-xs text-zinc-500">Set your daily focus target in minutes.</p>
+                      </div>
+                  </div>
+                  <div className="max-w-xs">
+                      <div className="relative group">
+                          <input 
+                            type="number" 
+                             value={user.dailyGoalMinutes || 60}
+                             onChange={async (e) => {
+                               const val = parseInt(e.target.value) || 0;
+                               setUser(prev => prev ? { ...prev, dailyGoalMinutes: val } : null);
+                               await dbService.updateUserProfile(user.uid, { dailyGoalMinutes: val });
+                             }}
+                            className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-white focus:border-emerald-500/50 outline-none transition-all font-bold text-xl"
+                          />
+                          <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-600 uppercase tracking-widest pointer-events-none">Minutes</span>
+                      </div>
+                  </div>
+              </div>
+
               <div className="p-8 rounded-3xl bg-zinc-900/30 border border-white/5 space-y-8 backdrop-blur-sm">
                   <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-nexus-electric/10 border border-nexus-electric/20 flex items-center justify-center">
@@ -501,7 +711,7 @@ const App: React.FC = () => {
               </div>
           </div>
       );
-      default: return <Dashboard user={user} onViewChange={setCurrentView} />;
+      default: return <Dashboard user={user} onViewChange={setCurrentView} onTriggerXP={triggerXP} onUpdateQuest={updateQuestProgress} />;
     }
   };
 
@@ -542,6 +752,11 @@ const App: React.FC = () => {
             activeTimerMins={timerIsActive ? Math.ceil(timerTimeValue / 60) : (timerType === 'pomodoro' && timerTimeValue < timerTotalTime ? Math.ceil(timerTimeValue/60) : null)}
         />
       </div>
+      <GamificationOverlay 
+        levelUp={levelUp} 
+        onCloseLevelUp={() => setLevelUp(null)} 
+        xpPopups={xpPopups} 
+      />
       <main className="flex-1 h-full relative z-10 overflow-hidden">
         <div className="h-full w-full p-3 md:p-6">{renderView()}</div>
       </main>

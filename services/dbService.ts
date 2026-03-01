@@ -6,7 +6,8 @@ import {
 } from 'firebase/firestore';
 import { 
   Task, ScheduleEvent, StudyGroup, 
-  StudySession, UserStatus, UserProfile, SocialPost, PostComment, DirectMessage
+  StudySession, UserStatus, UserProfile,
+  DailyQuest, ShopItem, GroupMessage
 } from '../types.ts';
 
 const sanitize = (obj: any): any => {
@@ -33,97 +34,11 @@ export const dbService = {
     await updateDoc(doc(db, 'users', uid), sanitize(data));
   },
 
-  // --- SOCIAL ---
-  createPost: async (post: Partial<SocialPost>) => {
-    const p = {
-      ...post,
-      timestamp: Date.now(),
-      commentCount: 0,
-      reactions: [
-        { emoji: '🔥', count: 0, uids: [] },
-        { emoji: '🧠', count: 0, uids: [] },
-        { emoji: '🫡', count: 0, uids: [] }
-      ]
-    };
-    await addDoc(collection(db, 'posts'), sanitize(p));
-  },
-
-  addComment: async (postId: string, comment: Partial<PostComment>) => {
-    await addDoc(collection(db, 'posts', postId, 'comments'), sanitize({
-      ...comment,
+  sendGroupMessage: async (msg: Partial<GroupMessage>) => {
+    await addDoc(collection(db, 'group_messages'), sanitize({
+      ...msg,
       timestamp: Date.now()
     }));
-    await updateDoc(doc(db, 'posts', postId), { commentCount: increment(1) });
-  },
-
-  addReaction: async (postId: string, emoji: string, userId: string, isAdding: boolean) => {
-    const postRef = doc(db, 'posts', postId);
-    const postSnap = await getDoc(postRef);
-    if (!postSnap.exists()) return;
-    const targetPost = postSnap.data() as SocialPost;
-
-    const newReactions = targetPost.reactions.map(r => {
-      if (r.emoji === emoji) {
-        const uids = new Set(r.uids);
-        if (isAdding) uids.add(userId);
-        else uids.delete(userId);
-        return { ...r, count: uids.size, uids: Array.from(uids) };
-      }
-      return r;
-    });
-
-    await updateDoc(postRef, { reactions: newReactions });
-  },
-
-  // --- FRIENDS ---
-  sendFriendRequest: async (targetUid: string, fromUser: UserProfile) => {
-    const targetRef = doc(db, 'users', targetUid);
-    const targetSnap = await getDoc(targetRef);
-    if (!targetSnap.exists()) return;
-    
-    const targetData = targetSnap.data() as UserProfile;
-    // Prevent duplicates
-    const alreadyRequested = (targetData.friendRequests || []).some(r => r.from === fromUser.uid);
-    if (alreadyRequested) return;
-
-    await updateDoc(targetRef, {
-      friendRequests: arrayUnion({ 
-        from: fromUser.uid, 
-        name: fromUser.name, 
-        avatar: fromUser.avatar || `https://api.dicebear.com/7.x/micah/svg?seed=${fromUser.name}&backgroundColor=transparent` 
-      })
-    });
-  },
-
-  acceptFriendRequest: async (myUid: string, friendUid: string) => {
-    const myRef = doc(db, 'users', myUid);
-    const friendRef = doc(db, 'users', friendUid);
-    const mySnap = await getDoc(myRef);
-    if (!mySnap.exists()) return;
-    const myData = mySnap.data() as UserProfile;
-
-    const newRequests = (myData.friendRequests || []).filter(r => r.from !== friendUid);
-    
-    await updateDoc(myRef, {
-      friends: arrayUnion(friendUid),
-      friendRequests: newRequests
-    });
-    await updateDoc(friendRef, {
-      friends: arrayUnion(myUid)
-    });
-  },
-
-  // --- MESSAGES ---
-  sendDM: async (dm: Partial<DirectMessage>) => {
-    await addDoc(collection(db, 'direct_messages'), sanitize({
-      ...dm,
-      timestamp: Date.now(),
-      seen: false
-    }));
-  },
-
-  markAsSeen: async (msgId: string) => {
-    await updateDoc(doc(db, 'direct_messages', msgId), { seen: true });
   },
 
   // --- DATA ---
@@ -152,6 +67,41 @@ export const dbService = {
   logActivity: async (activity: any) => {
     await addDoc(collection(db, 'activities'), sanitize({ ...activity, timestamp: Date.now() }));
   },
+  
+  // --- GAMIFICATION ---
+  awardRewards: async (uid: string, xp: number, credits: number) => {
+    const userRef = doc(db, 'users', uid);
+    await updateDoc(userRef, {
+      xp: increment(xp),
+      credits: increment(credits)
+    });
+  },
+
+  updateDailyQuests: async (uid: string, quests: DailyQuest[]) => {
+    await updateDoc(doc(db, 'users', uid), { dailyQuests: sanitize(quests) });
+  },
+
+  purchaseItem: async (uid: string, item: ShopItem) => {
+    const userRef = doc(db, 'users', uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return;
+    const userData = userSnap.data() as UserProfile;
+
+    if ((userData.credits || 0) < item.price) throw new Error("Insufficient credits");
+
+    const updates: any = {
+      credits: increment(-item.price)
+    };
+
+    if (item.type === 'theme') {
+      updates.unlockedThemes = arrayUnion(item.value);
+    } else if (item.type === 'streak_freeze') {
+      updates.streakFreezeCount = increment(1);
+    }
+
+    await updateDoc(userRef, updates);
+  },
+
   getSchedule: async (userId: string): Promise<ScheduleEvent[]> => {
     const q = query(collection(db, 'schedule'), where("userId", "==", userId));
     const snap = await getDocs(q);
