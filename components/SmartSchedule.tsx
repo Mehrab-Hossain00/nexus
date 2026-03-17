@@ -167,10 +167,10 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
   const GroupedEventList = ({ eventsForDay }: { eventsForDay: ScheduleEvent[] }) => (
       <div className="space-y-4">
           {eventsForDay.length === 0 ? (
-              <div className="text-zinc-600 text-xs italic p-4 border border-dashed border-white/5 rounded-xl text-center">No events</div>
+              <div className="text-zinc-600 text-xs italic p-4 border border-dashed border-nexus-border rounded-xl text-center">No events</div>
           ) : (
               eventsForDay.sort((a,b) => a.startTime.localeCompare(b.startTime)).map(event => (
-                  <div key={event.id} className="relative pl-4 pr-6 border-l-2 border-white/10 hover:border-indigo-500 transition-colors py-1 group">
+                  <div key={event.id} className="relative pl-4 pr-6 border-l-2 border-nexus-border hover:border-indigo-500 transition-colors py-1 group">
                       <div className="text-xs text-zinc-500 font-mono mb-1">{event.startTime}</div>
                       <div className="font-medium text-white text-sm truncate pr-2 group-hover:text-indigo-200 transition-colors">{event.title}</div>
                       {event.subject && <div className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">{event.subject}</div>}
@@ -189,7 +189,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
   );
 
   return (
-    <div className="h-full flex flex-col space-y-6 animate-fade-in relative pb-12">
+    <div className="h-full flex flex-col space-y-8 animate-fade-in relative pb-12 pr-2">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Schedule</h1>
@@ -198,56 +198,56 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
         <div className="flex gap-3">
             <button 
                 onClick={() => setShowManualModal(true)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-zinc-900/50 hover:bg-zinc-800 text-white font-medium rounded-xl transition-all border border-white/10 backdrop-blur-md hover:border-white/20 active:scale-95"
+                className="flex items-center gap-2 px-6 py-3 bg-nexus-card/50 hover:bg-white/10 text-white font-bold rounded-xl transition-all border border-nexus-border backdrop-blur-md hover:border-white/20 active:scale-95"
             >
                 <Plus className="w-4 h-4" />
                 <span>Add Event</span>
             </button>
             <button 
                 onClick={() => setShowAiModal(true)}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-600 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 px-6 py-3 bg-white text-black font-bold rounded-xl transition-all shadow-xl hover:bg-zinc-200 hover:scale-105 active:scale-95"
             >
-                <Sparkles className="w-4 h-4 animate-pulse" />
+                <Sparkles className="w-4 h-4 fill-black" />
                 <span>Generate Plan</span>
             </button>
         </div>
       </header>
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-zinc-900/20 p-2 rounded-2xl border border-white/5">
-         <div className="flex items-center bg-black/40 rounded-xl p-1">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-nexus-card/50 backdrop-blur-md p-2 rounded-2xl border border-nexus-border shadow-sm">
+         <div className="flex items-center bg-nexus-black/40 rounded-xl p-1">
              {['Day', 'Week', 'Month'].map(m => (
                  <button
                     key={m}
                     onClick={() => setViewMode(m as any)}
-                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all active:scale-95 ${viewMode === m ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all active:scale-95 ${viewMode === m ? 'bg-nexus-electric text-white shadow-md' : 'text-zinc-500 hover:text-white'}`}
                  >
                      {m}
                  </button>
              ))}
          </div>
          
-         <div className="flex items-center gap-4">
-             <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-white active:scale-90 transition-transform"><ChevronLeft className="w-5 h-5" /></button>
-             <span className="text-white font-medium min-w-[150px] text-center">
+         <div className="flex items-center gap-4 px-4">
+             <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white active:scale-90 transition-transform"><ChevronLeft className="w-5 h-5" /></button>
+             <span className="text-white font-bold min-w-[150px] text-center tracking-wide">
                  {viewMode === 'Day' && selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                  {viewMode === 'Week' && `Week of ${getWeekDays(selectedDate)[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
                  {viewMode === 'Month' && selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
              </span>
-             <button onClick={() => navigateDate('next')} className="p-2 hover:bg-white/5 rounded-full text-zinc-400 hover:text-white active:scale-90 transition-transform"><ChevronRight className="w-5 h-5" /></button>
+             <button onClick={() => navigateDate('next')} className="p-2 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white active:scale-90 transition-transform"><ChevronRight className="w-5 h-5" /></button>
          </div>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar relative min-h-[400px]">
          {viewMode === 'Day' && (
-            <div className="space-y-8 pl-0 pb-20 relative pt-4">
+            <div className="space-y-6 pl-0 pb-20 relative pt-4">
                 {isLoading && (
-                    <div className="absolute inset-0 flex items-start justify-center pt-20 bg-black/50 z-20 backdrop-blur-sm">
-                        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                    <div className="absolute inset-0 flex items-start justify-center pt-20 bg-nexus-black/50 z-20 backdrop-blur-sm rounded-3xl">
+                        <Loader2 className="w-8 h-8 animate-spin text-nexus-electric" />
                     </div>
                 )}
                 
                 {!isLoading && filteredEvents.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-64 text-zinc-600 bg-zinc-900/10 border border-dashed border-white/5 rounded-3xl mx-4">
+                    <div className="flex flex-col items-center justify-center h-64 text-zinc-600 bg-nexus-card/30 backdrop-blur-md border border-dashed border-nexus-border rounded-3xl mx-4">
                         <CalendarIcon className="w-12 h-12 mb-4 opacity-20" />
                         <p className="font-medium text-zinc-500">No events for this day.</p>
                     </div>
@@ -258,23 +258,23 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
                                 {event.startTime}
                             </div>
                             <div className={`
-                                absolute left-[92px] top-6 w-4 h-4 rounded-full border-[3px] z-10 bg-black transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_15px_currentColor]
-                                ${event.type === 'study' ? 'border-indigo-500 text-indigo-500' : 
+                                absolute left-[92px] top-6 w-4 h-4 rounded-full border-[3px] z-10 bg-nexus-black transition-all duration-300 group-hover:scale-125 group-hover:shadow-[0_0_15px_currentColor]
+                                ${event.type === 'study' ? 'border-nexus-electric text-nexus-electric' : 
                                 event.type === 'break' ? 'border-emerald-500 text-emerald-500' : 
                                 event.type === 'exam' ? 'border-rose-500 text-rose-500' : 'border-zinc-500 text-zinc-500'}
                             `} />
                             <div className={`
-                                p-6 rounded-2xl border-y border-r border-l-4 transition-all duration-300 relative overflow-hidden group-hover:-translate-y-1 group-hover:shadow-lg group-hover:scale-[1.01]
-                                ${event.type === 'break' ? 'bg-emerald-900/5 border-white/5 border-l-emerald-500 hover:bg-emerald-900/10' : 
-                                event.type === 'exam' ? 'bg-rose-900/5 border-white/5 border-l-rose-500 hover:bg-rose-900/10' : 
-                                'bg-zinc-900/30 border-white/5 border-l-indigo-500 hover:border-indigo-500/30 hover:bg-zinc-900/50 hover:shadow-[0_10px_30px_-10px_rgba(99,102,241,0.2)]'}
+                                p-6 rounded-3xl border-y border-r border-l-4 transition-all duration-300 relative overflow-hidden group-hover:-translate-y-1 group-hover:shadow-lg group-hover:scale-[1.01] backdrop-blur-md
+                                ${event.type === 'break' ? 'bg-emerald-900/10 border-nexus-border border-l-emerald-500 hover:bg-emerald-900/20' : 
+                                event.type === 'exam' ? 'bg-rose-900/10 border-nexus-border border-l-rose-500 hover:bg-rose-900/20' : 
+                                'bg-nexus-card/60 border-nexus-border border-l-nexus-electric hover:border-nexus-electric/30 hover:bg-nexus-card hover:shadow-[0_10px_30px_-10px_rgba(var(--nexus-accent-rgb),0.2)]'}
                             `}>
                                 <div className="flex justify-between items-start mb-3 relative z-10">
                                     <div className="flex flex-col gap-1">
-                                        <h3 className="font-bold text-white text-lg tracking-tight group-hover:text-indigo-100 transition-colors">{event.title}</h3>
+                                        <h3 className="font-bold text-white text-lg tracking-tight group-hover:text-nexus-electric transition-colors">{event.title}</h3>
                                         {event.subject && (
                                             <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5
-                                                ${event.type === 'break' ? 'text-emerald-400' : event.type === 'exam' ? 'text-rose-400' : 'text-indigo-400'}
+                                                ${event.type === 'break' ? 'text-emerald-400' : event.type === 'exam' ? 'text-rose-400' : 'text-nexus-electric'}
                                             `}>
                                                 <Tag className="w-3 h-3" />
                                                 {event.subject}
@@ -282,7 +282,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <div className="flex items-center text-xs font-mono text-zinc-500 bg-black/20 px-3 py-1.5 rounded-full border border-white/5 group-hover:border-white/10">
+                                        <div className="flex items-center text-xs font-mono text-zinc-400 bg-nexus-black/40 px-3 py-1.5 rounded-full border border-nexus-border group-hover:border-white/10 transition-colors">
                                             <Clock className="w-3 h-3 mr-2" />
                                             {event.durationMinutes} min
                                         </div>
@@ -310,8 +310,8 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
                      const dayEvents = events.filter(e => (e.date || toDateString(new Date())) === dateStr);
                      const isToday = dateStr === toDateString(new Date());
                      return (
-                         <div key={dateStr} className={`bg-zinc-900/20 rounded-xl border ${isToday ? 'border-indigo-500/50 bg-indigo-500/5 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'border-white/5'} p-3 min-h-[300px] hover:bg-zinc-800/30 transition-colors`}>
-                             <div className={`text-center mb-4 pb-2 border-b ${isToday ? 'border-indigo-500/30' : 'border-white/5'}`}>
+                         <div key={dateStr} className={`bg-nexus-card rounded-xl border ${isToday ? 'border-indigo-500/50 bg-indigo-500/5 shadow-[0_0_15px_rgba(99,102,241,0.1)]' : 'border-nexus-border'} p-3 min-h-[300px] hover:bg-nexus-card/30 transition-colors`}>
+                             <div className={`text-center mb-4 pb-2 border-b ${isToday ? 'border-indigo-500/30' : 'border-nexus-border'}`}>
                                  <div className={`text-xs font-bold uppercase ${isToday ? 'text-indigo-400' : 'text-zinc-500'}`}>{day.toLocaleDateString('en-US', { weekday: 'short' })}</div>
                                  <div className={`text-lg font-bold ${isToday ? 'text-white' : 'text-zinc-300'}`}>{day.getDate()}</div>
                              </div>
@@ -333,7 +333,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
                          <div 
                            key={i} 
                            onClick={() => { setSelectedDate(d); setViewMode('Day'); }}
-                           className={`aspect-square bg-zinc-900/30 rounded-lg border ${isToday ? 'border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.3)]' : 'border-white/5'} p-2 hover:bg-zinc-800/50 transition-all hover:scale-105 cursor-pointer relative group`}
+                           className={`aspect-square bg-nexus-card rounded-lg border ${isToday ? 'border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.3)]' : 'border-nexus-border'} p-2 hover:bg-nexus-card/50 transition-all hover:scale-105 cursor-pointer relative group`}
                          >
                              <div className={`text-xs font-bold ${isToday ? 'text-indigo-400' : 'text-zinc-500'}`}>{i + 1}</div>
                              {dayEvents.length > 0 && (
@@ -351,8 +351,8 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
       </div>
 
       {showAiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="w-full max-w-lg bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl animate-fade-in relative overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-nexus-black/80 backdrop-blur-md">
+          <div className="w-full max-w-lg bg-[#09090b] border border-nexus-border rounded-3xl p-8 shadow-2xl animate-fade-in relative overflow-hidden">
              <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500" />
              <div className="flex justify-between items-center mb-6">
                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -377,7 +377,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
                                     text-xs px-4 py-2 rounded-full border transition-all duration-300 font-medium group relative active:scale-95
                                     ${selectedSubjects.includes(sub) 
                                         ? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)] pr-8' 
-                                        : 'bg-zinc-900 text-zinc-400 border-white/5 hover:border-white/20 hover:bg-zinc-800'}
+                                        : 'bg-nexus-card text-zinc-400 border-nexus-border hover:border-white/20 hover:bg-nexus-card'}
                                 `}
                             >
                                 {sub}
@@ -392,7 +392,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
                             </button>
                         ))}
                         {isAddingSubject ? (
-                            <div className="flex items-center gap-2 bg-zinc-900 border border-indigo-500/50 rounded-full px-3 py-1 animate-fade-in">
+                            <div className="flex items-center gap-2 bg-nexus-card border border-indigo-500/50 rounded-full px-3 py-1 animate-fade-in">
                                 <input 
                                     autoFocus
                                     value={newSubjectName}
@@ -419,7 +419,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
                         placeholder="Describe your goals for today..."
-                        className="w-full h-32 bg-zinc-900/50 border border-white/10 rounded-xl p-4 text-white focus:border-indigo-500/50 outline-none resize-none transition-all text-sm"
+                        className="w-full h-32 bg-nexus-card border border-nexus-border rounded-xl p-4 text-white focus:border-indigo-500/50 outline-none resize-none transition-all text-sm"
                     />
                 </div>
                 <button 
@@ -435,8 +435,8 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
       )}
 
       {showManualModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="w-full max-w-md bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-nexus-black/80 backdrop-blur-md">
+          <div className="w-full max-w-md bg-[#09090b] border border-nexus-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
             <div className="flex justify-between items-center mb-6">
                  <h3 className="text-xl font-bold text-white">Add Event</h3>
@@ -445,28 +445,28 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
             <form onSubmit={handleManualAdd} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Title</label>
-                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none" placeholder="e.g. Read Book" />
+                <input name="title" required className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none" placeholder="e.g. Read Book" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Date</label>
-                  <input name="date" type="date" required defaultValue={toDateString(new Date())} className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white [color-scheme:dark]" />
+                  <input name="date" type="date" required defaultValue={toDateString(new Date())} className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white [color-scheme:dark]" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Start Time</label>
-                  <input name="startTime" type="time" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white [color-scheme:dark]" />
+                  <input name="startTime" type="time" required className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white [color-scheme:dark]" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Subject</label>
-                  <select name="subject" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all">
+                  <select name="subject" className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all">
                       {subjects.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Type</label>
-                   <select name="type" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white appearance-none">
+                   <select name="type" className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white appearance-none">
                      <option value="study">Study</option>
                      <option value="break">Break</option>
                      <option value="exam">Exam</option>
@@ -476,7 +476,7 @@ export const SmartSchedule: React.FC<SmartScheduleProps> = ({ user, subjects, se
               </div>
               <div>
                   <label className="block text-xs font-bold text-zinc-500 uppercase tracking-widest mb-2">Duration (min)</label>
-                  <input name="duration" type="number" min="5" step="5" defaultValue="50" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white" />
+                  <input name="duration" type="number" min="5" step="5" defaultValue="50" required className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white" />
               </div>
               <button type="submit" className="w-full mt-4 px-6 py-3.5 bg-white text-black font-bold rounded-xl active:scale-95">Add Event</button>
             </form>

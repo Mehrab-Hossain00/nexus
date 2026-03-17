@@ -17,7 +17,8 @@ import {
   ChevronRight,
   ShoppingBag,
   Award,
-  Users
+  Users,
+  Target
 } from 'lucide-react';
 import { AppView, UserProfile } from '../types.ts';
 
@@ -37,17 +38,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
     localStorage.setItem('nexus_sidebar_collapsed', isCollapsed.toString());
   }, [isCollapsed]);
 
-  const navItems = [
-    { view: AppView.DASHBOARD, icon: LayoutDashboard, label: 'Home' },
-    { view: AppView.TASKS, icon: CheckSquare, label: 'Tasks' },
-    { view: AppView.SCHEDULE, icon: Calendar, label: 'Schedule' },
-    { view: AppView.TIMER, icon: Clock, label: 'Timer' },
-    { view: AppView.HUB, icon: Users, label: 'Groups' },
-    { view: AppView.SHOP, icon: ShoppingBag, label: 'Shop' },
-    { view: AppView.ACHIEVEMENTS, icon: Award, label: 'Badges' },
-    { view: AppView.TUTOR, icon: BrainCircuit, label: 'AI Help' },
-    { view: AppView.ANALYTICS, icon: BarChart2, label: 'Stats' },
-    { view: AppView.SETTINGS, icon: Settings, label: 'Settings' },
+  const navGroups = [
+    {
+      title: 'Focus',
+      items: [
+        { view: AppView.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
+        { view: AppView.TIMER, icon: Clock, label: 'Focus Timer' },
+        { view: AppView.TASKS, icon: CheckSquare, label: 'Tasks' },
+        { view: AppView.SCHEDULE, icon: Calendar, label: 'Schedule' },
+      ]
+    },
+    {
+      title: 'Progression',
+      items: [
+        { view: AppView.DAILY_QUESTS, icon: Target, label: 'Daily Quests' },
+        { view: AppView.ACHIEVEMENTS, icon: Award, label: 'Achievements' },
+        { view: AppView.SHOP, icon: ShoppingBag, label: 'Nexus Emporium' },
+      ]
+    },
+    {
+      title: 'Network',
+      items: [
+        { view: AppView.HUB, icon: Users, label: 'Study Groups' },
+        { view: AppView.TUTOR, icon: BrainCircuit, label: 'AI Tutor' },
+        { view: AppView.ANALYTICS, icon: BarChart2, label: 'Analytics' },
+      ]
+    }
   ];
 
   const handleNavClick = (view: AppView) => {
@@ -59,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
     <>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden fixed top-6 right-6 z-50 p-2 bg-zinc-900/80 backdrop-blur-md rounded-full border border-white/10 text-white shadow-lg active:scale-90 transition-transform"
+        className="md:hidden fixed top-6 right-6 z-50 p-2 bg-nexus-card backdrop-blur-md rounded-full border border-nexus-border text-white shadow-lg active:scale-90 transition-transform"
       >
         {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
@@ -67,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
       <aside 
         className={`
           fixed md:relative z-40 h-full
-          bg-black/40 backdrop-blur-xl border-r border-white/5
+          bg-nexus-black/40 backdrop-blur-xl border-r border-nexus-border
           flex flex-col justify-between transition-all duration-500 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           ${isCollapsed ? 'w-24' : 'w-72'}
@@ -75,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
       >
         <div className={`p-8 flex-1 overflow-y-auto custom-scrollbar flex flex-col items-center ${isCollapsed ? 'px-4' : 'px-8'}`}>
           <div className={`flex items-center gap-3 mb-12 group cursor-pointer w-full ${isCollapsed ? 'justify-center' : ''}`} onClick={() => setIsCollapsed(!isCollapsed)}>
-            <div className="w-10 h-10 shrink-0 bg-black border border-white/10 rounded-xl flex items-center justify-center relative overflow-hidden group-hover:border-nexus-electric transition-all duration-300">
+            <div className="w-10 h-10 shrink-0 bg-nexus-black border border-nexus-border rounded-xl flex items-center justify-center relative overflow-hidden group-hover:border-nexus-electric transition-all duration-300">
                <div className="absolute top-0 right-0 w-3 h-3 bg-nexus-electric blur-[8px] rounded-full opacity-75" />
                <Sparkles className="w-5 h-5 text-white relative z-10" />
             </div>
@@ -88,44 +104,55 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
             {!isCollapsed && <ChevronLeft className="w-4 h-4 text-zinc-600 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />}
           </div>
 
-          <nav className="space-y-2 w-full">
-            {navItems.map((item) => {
-              const isActive = currentView === item.view;
-              const hasTimer = item.view === AppView.TIMER && activeTimerMins !== null;
-              
-              return (
-                <button
-                  key={item.view}
-                  onClick={() => handleNavClick(item.view)}
-                  className={`
-                    w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden group
-                    ${isCollapsed ? 'justify-center' : ''}
-                    ${isActive 
-                      ? 'bg-gradient-to-r from-nexus-electric/10 to-transparent border-l-2 border-nexus-electric shadow-[0_0_20px_rgba(var(--nexus-accent-rgb),0.1)]' 
-                      : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5 border-l-2 border-transparent'}
-                  `}
-                  title={isCollapsed ? item.label : undefined}
-                >
-                  <item.icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-nexus-electric' : 'group-hover:text-zinc-300'}`} />
-                  {!isCollapsed && <span className={`relative z-10 flex-1 text-left ${isActive ? 'text-white' : ''}`}>{item.label}</span>}
-                  
-                  {hasTimer && (
-                    <span className={`relative z-10 px-2 py-0.5 rounded-md bg-nexus-electric text-[9px] font-bold text-white animate-pulse ${isCollapsed ? 'absolute top-1 right-1' : ''}`}>
-                        {activeTimerMins}m
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+          <div className="space-y-8 w-full">
+            {navGroups.map((group, idx) => (
+              <div key={idx} className="w-full">
+                {!isCollapsed && (
+                  <h3 className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3 px-4">
+                    {group.title}
+                  </h3>
+                )}
+                <nav className="space-y-1">
+                  {group.items.map((item) => {
+                    const isActive = currentView === item.view;
+                    const hasTimer = item.view === AppView.TIMER && activeTimerMins !== null;
+                    
+                    return (
+                      <button
+                        key={item.view}
+                        onClick={() => handleNavClick(item.view)}
+                        className={`
+                          w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden group
+                          ${isCollapsed ? 'justify-center' : ''}
+                          ${isActive 
+                            ? 'bg-gradient-to-r from-nexus-electric/10 to-transparent border-l-2 border-nexus-electric shadow-[0_0_20px_rgba(var(--nexus-accent-rgb),0.1)]' 
+                            : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5 border-l-2 border-transparent'}
+                        `}
+                        title={isCollapsed ? item.label : undefined}
+                      >
+                        <item.icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-nexus-electric' : 'group-hover:text-zinc-300'}`} />
+                        {!isCollapsed && <span className={`relative z-10 flex-1 text-left ${isActive ? 'text-white' : ''}`}>{item.label}</span>}
+                        
+                        {hasTimer && (
+                          <span className={`relative z-10 px-2 py-0.5 rounded-md bg-nexus-electric text-[9px] font-bold text-white animate-pulse ${isCollapsed ? 'absolute top-1 right-1' : ''}`}>
+                              {activeTimerMins}m
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className={`p-6 border-t border-white/5 space-y-4 flex flex-col ${isCollapsed ? 'items-center' : ''}`}>
+        <div className={`p-6 border-t border-nexus-border space-y-4 flex flex-col ${isCollapsed ? 'items-center' : ''}`}>
           <div 
             onClick={() => handleNavClick(AppView.SETTINGS)}
-            className={`flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-nexus-electric/30 transition-all cursor-pointer group w-full ${isCollapsed ? 'justify-center p-2' : ''}`}
+            className={`flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-nexus-border hover:bg-white/10 hover:border-nexus-electric/30 transition-all cursor-pointer group w-full ${isCollapsed ? 'justify-center p-2' : ''}`}
           >
-              <img src={user.avatar} className="w-10 h-10 rounded-xl bg-black border border-white/10 group-hover:scale-105 transition-transform shrink-0" alt="Avatar" />
+              <img src={user.avatar} className="w-10 h-10 rounded-xl bg-nexus-black border border-nexus-border group-hover:scale-105 transition-transform shrink-0" alt="Avatar" />
               {!isCollapsed && (
                 <div className="min-w-0 animate-fade-in">
                     <p className="text-xs font-bold text-white truncate">{user.name}</p>
@@ -145,7 +172,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
       </aside>
 
       {isOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-30 md:hidden" onClick={() => setIsOpen(false)} />
+        <div className="fixed inset-0 bg-nexus-black/80 backdrop-blur-sm z-30 md:hidden" onClick={() => setIsOpen(false)} />
       )}
     </>
   );

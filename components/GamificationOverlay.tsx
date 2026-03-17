@@ -45,13 +45,13 @@ export const GamificationOverlay: React.FC<GamificationOverlayProps> = ({ levelU
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-xl p-6"
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-nexus-black/90 backdrop-blur-xl p-6"
           >
             <motion.div
               initial={{ scale: 0.8, y: 50 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.8, y: 50 }}
-              className="w-full max-w-md bg-zinc-900 border border-nexus-electric/30 rounded-[3rem] p-10 text-center relative overflow-hidden shadow-[0_0_100px_rgba(124,58,237,0.2)]"
+              className="w-full max-w-md bg-nexus-card border border-nexus-electric/30 rounded-[3rem] p-10 text-center relative overflow-hidden shadow-[0_0_100px_rgba(124,58,237,0.2)]"
             >
               <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-nexus-electric via-nexus-violet to-nexus-electric animate-glow" />
               
@@ -79,11 +79,11 @@ export const GamificationOverlay: React.FC<GamificationOverlayProps> = ({ levelU
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                  <div className="bg-nexus-black/40 border border-nexus-border p-4 rounded-2xl">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Bonus XP</p>
                     <p className="text-xl font-black text-white">+{levelUp.rewards.xp}</p>
                   </div>
-                  <div className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+                  <div className="bg-nexus-black/40 border border-nexus-border p-4 rounded-2xl">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Credits</p>
                     <p className="text-xl font-black text-nexus-violet">+{levelUp.rewards.credits}</p>
                   </div>

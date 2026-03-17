@@ -44,11 +44,11 @@ export const Achievements: React.FC<AchievementsProps> = ({ user }) => {
             <motion.div
               key={ach.id}
               whileHover={{ scale: 1.02 }}
-              className={`p-8 rounded-[2.5rem] border backdrop-blur-xl flex flex-col items-center text-center relative overflow-hidden transition-all ${isUnlocked ? 'bg-nexus-electric/5 border-nexus-electric/20 shadow-[0_0_40px_rgba(124,58,237,0.1)]' : 'bg-zinc-900/20 border-white/5 opacity-60'}`}
+              className={`p-8 rounded-[2.5rem] border backdrop-blur-xl flex flex-col items-center text-center relative overflow-hidden transition-all ${isUnlocked ? 'bg-nexus-electric/5 border-nexus-electric/20 shadow-[0_0_40px_rgba(124,58,237,0.1)]' : 'bg-nexus-card border-nexus-border opacity-60'}`}
             >
-              <div className="w-20 h-20 rounded-3xl bg-black border border-white/5 flex items-center justify-center mb-6 relative">
+              <div className="w-20 h-20 rounded-3xl bg-nexus-black border border-nexus-border flex items-center justify-center mb-6 relative">
                 {getIcon(ach.icon, isUnlocked)}
-                {!isUnlocked && <Lock className="absolute -top-2 -right-2 w-6 h-6 text-zinc-700 bg-black rounded-full p-1 border border-white/10" />}
+                {!isUnlocked && <Lock className="absolute -top-2 -right-2 w-6 h-6 text-zinc-700 bg-nexus-black rounded-full p-1 border border-nexus-border" />}
                 {isUnlocked && (
                   <motion.div
                     animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.5, 0.2] }}

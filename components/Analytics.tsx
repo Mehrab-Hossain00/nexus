@@ -160,7 +160,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
             <h1 className="text-3xl font-bold text-white tracking-tight">Study Stats</h1>
             <p className="text-zinc-500 text-sm mt-1">Check your study progress and trends.</p>
          </div>
-         <div className="flex bg-zinc-900/40 p-1 rounded-xl border border-white/5 backdrop-blur-md">
+         <div className="flex bg-nexus-card p-1 rounded-xl border border-nexus-border backdrop-blur-md">
             {(['Daily', 'Weekly', 'Monthly', 'Yearly'] as TimeRange[]).map(r => (
                 <button
                     key={r}
@@ -181,7 +181,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 p-8 rounded-[2.5rem] bg-zinc-900/20 border border-white/5 backdrop-blur-xl h-[400px] flex flex-col group relative overflow-hidden shadow-xl">
+        <div className="lg:col-span-2 p-8 rounded-[2.5rem] bg-nexus-card border border-nexus-border backdrop-blur-xl h-[400px] flex flex-col group relative overflow-hidden shadow-xl">
             <div className="absolute top-0 right-0 w-64 h-64 bg-nexus-electric/5 blur-[80px] rounded-full pointer-events-none" />
             <div className="flex justify-between items-center mb-10 relative z-10">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -212,7 +212,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
             </div>
         </div>
 
-        <div className="p-8 rounded-[2.5rem] bg-zinc-900/20 border border-white/5 backdrop-blur-xl h-[400px] flex flex-col relative overflow-hidden group shadow-xl">
+        <div className="p-8 rounded-[2.5rem] bg-nexus-card border border-nexus-border backdrop-blur-xl h-[400px] flex flex-col relative overflow-hidden group shadow-xl">
             <div className="mb-6 relative z-10">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                     <Target className="w-5 h-5 text-emerald-400" />
@@ -243,7 +243,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
         </div>
 
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 p-8 rounded-[2.5rem] bg-zinc-900/20 border border-white/5 backdrop-blur-xl min-h-[500px] flex flex-col shadow-2xl">
+            <div className="md:col-span-2 p-8 rounded-[2.5rem] bg-nexus-card border border-nexus-border backdrop-blur-xl min-h-[500px] flex flex-col shadow-2xl">
                 <div className="flex justify-between items-center mb-8">
                     <div>
                         <h3 className="text-lg font-bold text-white flex items-center gap-2 uppercase tracking-tight">
@@ -252,7 +252,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
                         </h3>
                         <p className="text-xs text-zinc-500 mt-1 uppercase font-bold tracking-widest">History</p>
                     </div>
-                    <div className="flex items-center gap-4 bg-black/40 p-1 rounded-xl border border-white/5 shadow-inner">
+                    <div className="flex items-center gap-4 bg-nexus-black/40 p-1 rounded-xl border border-nexus-border shadow-inner">
                         <button onClick={() => changeMonth('prev')} className="p-2 hover:bg-white/5 text-zinc-400 rounded-lg transition-all"><ChevronLeft className="w-4 h-4" /></button>
                         <span className="text-xs font-black text-white uppercase tracking-widest min-w-[120px] text-center">
                             {currentCalendarDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
@@ -272,7 +272,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
                                 onClick={() => setSelectedDay(d.date)}
                                 className={`
                                     aspect-square rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all duration-300 relative group
-                                    ${selectedDay === d.date ? 'bg-nexus-electric border-nexus-electric shadow-[0_0_20px_rgba(var(--nexus-accent-rgb),0.3)] scale-105' : 'bg-black/20 border-white/5 hover:border-white/20 hover:bg-black/40'}
+                                    ${selectedDay === d.date ? 'bg-nexus-electric border-nexus-electric shadow-[0_0_20px_rgba(var(--nexus-accent-rgb),0.3)] scale-105' : 'bg-nexus-black/20 border-nexus-border hover:border-white/20 hover:bg-nexus-black/40'}
                                 `}
                             >
                                 <span className={`text-xs font-bold ${selectedDay === d.date ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`}>{d.day}</span>
@@ -289,7 +289,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
                 </div>
             </div>
 
-            <div className="p-8 rounded-[2.5rem] bg-zinc-900/40 border border-white/5 backdrop-blur-xl flex flex-col shadow-2xl relative overflow-hidden group">
+            <div className="p-8 rounded-[2.5rem] bg-nexus-card border border-nexus-border backdrop-blur-xl flex flex-col shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-nexus-electric to-transparent" />
                 
                 <div className="flex justify-between items-start mb-6">
@@ -297,12 +297,12 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
                         <h4 className="text-xs font-black text-zinc-500 uppercase tracking-[0.2em] mb-1">Summary</h4>
                         <h3 className="text-xl font-bold text-white tracking-tight">{analysisData?.title}</h3>
                     </div>
-                    <div className="w-10 h-10 rounded-xl bg-black border border-white/5 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-nexus-black border border-nexus-border flex items-center justify-center">
                         <Layers className="w-5 h-5 text-nexus-electric" />
                     </div>
                 </div>
 
-                <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 mb-8">
+                <div className="flex bg-nexus-black/40 p-1 rounded-xl border border-nexus-border mb-8">
                     {(['Day', 'Week', 'Month'] as AnalysisTab[]).map(tab => (
                         <button 
                             key={tab}
@@ -322,14 +322,14 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
                                 <div key={sub.name} className="space-y-2 animate-slide-up" style={{ animationDelay: `${i * 80}ms` }}>
                                     <div className="flex justify-between items-end">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-lg bg-black flex items-center justify-center border border-white/5">
+                                            <div className="w-6 h-6 rounded-lg bg-nexus-black flex items-center justify-center border border-nexus-border">
                                                 <Zap className="w-3 h-3 text-nexus-violet" />
                                             </div>
                                             <span className="text-[11px] font-bold text-white uppercase tracking-wider">{sub.name}</span>
                                         </div>
                                         <span className="text-[9px] font-mono text-zinc-500 uppercase">{sub.duration} MIN</span>
                                     </div>
-                                    <div className="h-1 bg-black/60 rounded-full overflow-hidden">
+                                    <div className="h-1 bg-nexus-black/60 rounded-full overflow-hidden">
                                         <div 
                                             className="h-full bg-nexus-electric rounded-full transition-all duration-1000" 
                                             style={{ width: `${Math.min(100, (sub.duration / (analysisData.totalSeconds/60)) * 100)}%` }} 
@@ -347,7 +347,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
                 </div>
 
                 {analysisData && analysisData.totalSeconds > 0 && (
-                    <div className="mt-8 pt-6 border-t border-white/5">
+                    <div className="mt-8 pt-6 border-t border-nexus-border">
                         <div className="flex justify-between items-end">
                             <div>
                                 <p className="text-[10px] font-black text-zinc-600 uppercase tracking-widest mb-1">Study Time</p>
@@ -368,9 +368,9 @@ export const Analytics: React.FC<AnalyticsProps> = ({ user }) => {
 };
 
 const StatCard = ({ icon: Icon, value, label, color }: any) => (
-    <div className={`p-8 rounded-3xl border border-white/5 bg-zinc-900/10 backdrop-blur-sm group hover:border-white/10 transition-all hover:bg-zinc-900/20 shadow-xl`}>
+    <div className={`p-8 rounded-3xl border border-nexus-border bg-nexus-card backdrop-blur-sm group hover:border-nexus-border transition-all hover:bg-nexus-card shadow-xl`}>
         <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-2xl bg-black flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform shadow-inner">
+            <div className="w-12 h-12 rounded-2xl bg-nexus-black flex items-center justify-center border border-nexus-border group-hover:scale-110 transition-transform shadow-inner">
                 <Icon className={`w-6 h-6 ${color}`} />
             </div>
             <span className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] font-black leading-tight">{label}</span>

@@ -103,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange, onTrig
           <p className="text-nexus-slate text-sm font-medium mt-1">Welcome back to your high-performance workspace.</p>
         </div>
         <div className="flex items-center gap-3">
-            <div className="glass px-4 py-2 rounded-xl flex flex-col gap-1 border-white/10 min-w-[120px]">
+            <div className="glass px-4 py-2 rounded-xl flex flex-col gap-1 border-nexus-border min-w-[120px]">
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-nexus-electric fill-nexus-electric" />
                   <span className="text-sm font-bold text-white">LVL {user.level || 1}</span>
@@ -115,30 +115,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange, onTrig
                   />
                 </div>
             </div>
-            <div className="glass px-4 py-2 rounded-xl flex items-center gap-2 border-white/10">
+            <div className="glass px-4 py-2 rounded-xl flex items-center gap-2 border-nexus-border">
                 <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
                 <span className="text-sm font-bold text-white">{user.streak || 0} Day Streak</span>
             </div>
-            <div className="glass px-4 py-2 rounded-xl flex items-center gap-2 border-white/10">
+            <div className="glass px-4 py-2 rounded-xl flex items-center gap-2 border-nexus-border">
                 <Sparkles className="w-4 h-4 text-nexus-violet fill-nexus-violet" />
                 <span className="text-sm font-bold text-white">{user.credits || 0} Credits</span>
             </div>
         </div>
       </header>
 
-      <div className="bento-grid grid-rows-6 h-[1400px] md:h-[900px]">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-[minmax(180px,auto)]">
         
         {/* Main Progress Bento Card */}
-        <div className="col-span-12 md:col-span-8 row-span-3 glass-card rounded-[2.5rem] p-8 md:p-10 flex flex-col justify-between group relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-nexus-electric/10 blur-[100px] rounded-full -mr-20 -mt-20 group-hover:bg-nexus-electric/20 transition-all duration-700" />
+        <div className="md:col-span-8 row-span-2 bg-nexus-card border border-nexus-border rounded-3xl p-8 md:p-10 flex flex-col justify-between group relative overflow-hidden backdrop-blur-md">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-nexus-electric/10 blur-[120px] rounded-full -mr-20 -mt-20 group-hover:bg-nexus-electric/20 transition-all duration-700" />
           
           <div className="relative z-10">
             <div className="flex justify-between items-start mb-10 md:mb-12">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-nexus-slate">Primary Focus</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">Primary Focus</span>
                 <h3 className="text-2xl md:text-3xl font-bold text-white mt-1">Daily Flow Objective</h3>
               </div>
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl glass flex items-center justify-center border-nexus-electric/20 shadow-[0_0_25px_rgba(var(--nexus-accent-rgb),0.1)] shrink-0">
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-nexus-electric/10 flex items-center justify-center border border-nexus-electric/20 shadow-[0_0_25px_rgba(var(--nexus-accent-rgb),0.1)] shrink-0">
                 <Target className="w-6 h-6 md:w-7 md:h-7 text-nexus-electric" />
               </div>
             </div>
@@ -147,115 +147,125 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onViewChange, onTrig
               <div className="flex justify-between items-end">
                 <div className="flex items-baseline gap-2">
                   <span className="text-6xl md:text-7xl font-black tracking-tighter text-white">{Math.round(dailyProgress)}</span>
-                  <span className="text-2xl md:text-3xl font-bold text-nexus-slate">%</span>
+                  <span className="text-2xl md:text-3xl font-bold text-zinc-500">%</span>
                 </div>
                 <div className="text-right">
-                   <p className="text-[10px] font-bold text-nexus-slate uppercase tracking-widest mb-1">XP Potential</p>
+                   <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1">XP Potential</p>
                    <p className="text-xl md:text-2xl font-bold text-white">+{Math.floor(dailyProgress * 5)} <span className="text-nexus-electric">pts</span></p>
                 </div>
               </div>
               
-              <div className="h-4 md:h-5 w-full bg-white/5 rounded-full overflow-hidden p-1 border border-white/5">
+              <div className="h-4 md:h-5 w-full bg-nexus-black/40 rounded-full overflow-hidden p-1 border border-nexus-border">
                 <div 
                   className="h-full bg-gradient-to-r from-nexus-violet to-nexus-electric rounded-full transition-all duration-1000 shadow-[0_0_25px_rgba(var(--nexus-accent-rgb),0.5)]"
                   style={{ width: `${dailyProgress}%` }}
                 />
               </div>
-              <p className="text-xs md:text-sm text-nexus-slate max-w-md leading-relaxed">Maintain your current pace to unlock a <span className="text-white font-bold">2x multiplier</span> for your next study session.</p>
+              <p className="text-xs md:text-sm text-zinc-400 max-w-md leading-relaxed">Maintain your current pace to unlock a <span className="text-white font-bold">2x multiplier</span> for your next study session.</p>
             </div>
           </div>
           
-          <div className="relative z-10 flex flex-wrap gap-3 mt-6">
+          <div className="relative z-10 flex flex-wrap gap-3 mt-8">
             <button 
-              // Fix: AppView.FOCUS does not exist. Use AppView.TIMER to initiate focus.
               onClick={() => onViewChange(AppView.TIMER)} 
-              className="px-6 py-3 bg-white text-black text-sm font-black rounded-xl md:rounded-2xl flex items-center gap-2 active:scale-95 transition-all shadow-xl hover:bg-zinc-100"
+              className="px-6 py-3 bg-white text-black text-sm font-bold rounded-xl flex items-center gap-2 active:scale-95 transition-all shadow-xl hover:bg-zinc-200"
             >
               <Play className="w-4 h-4 fill-black" />
               Initiate Focus
             </button>
             <button 
               onClick={() => onViewChange(AppView.ANALYTICS)} 
-              className="px-6 py-3 glass text-white text-sm font-black rounded-xl md:rounded-2xl glass-card active:scale-95 transition-all"
+              className="px-6 py-3 bg-nexus-black/40 text-white text-sm font-bold rounded-xl border border-nexus-border hover:bg-white/5 active:scale-95 transition-all"
             >
               Performance Metrics
             </button>
           </div>
         </div>
 
-        {/* Course Card Bento */}
-        <div className="col-span-12 md:col-span-4 row-span-2 glass-card rounded-[2.5rem] p-8 group flex flex-col justify-between relative overflow-hidden">
-           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-nexus-violet/5 blur-[60px] rounded-full group-hover:bg-nexus-violet/15 transition-all" />
-           <div className="relative z-10">
-              <div className="flex justify-between items-start mb-6">
-                 <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-nexus-violet">Next Academic Node</span>
-                 <BookOpen className="w-5 h-5 text-nexus-slate group-hover:text-nexus-violet transition-colors" />
-              </div>
-              {nextEvent ? (
-                <>
-                  <h4 className="text-2xl font-black text-white truncate leading-tight">{nextEvent.title}</h4>
-                  <p className="text-sm text-nexus-slate font-medium mt-2 flex items-center gap-2">
-                    <Clock className="w-4 h-4" /> {nextEvent.startTime} • {nextEvent.subject}
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-nexus-slate italic">All nodes synchronized.</p>
-              )}
-           </div>
-           <button onClick={() => onViewChange(AppView.SCHEDULE)} className="mt-8 flex items-center gap-2 text-xs font-black text-white group-hover:gap-4 transition-all uppercase tracking-[0.2em] relative z-10">
-              Access Schedule <ArrowRight className="w-4 h-4 text-nexus-electric" />
-           </button>
-        </div>
-
-        {/* Stats Bento - Activity */}
-        <div className="col-span-12 md:col-span-4 row-span-4 glass-card rounded-[2.5rem] p-8 flex flex-col">
+        {/* Daily Quests Bento */}
+        <div className="md:col-span-4 row-span-3 bg-nexus-card border border-nexus-border rounded-3xl p-8 flex flex-col backdrop-blur-md">
            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-lg font-black text-white flex items-center gap-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-3">
                  <Sparkles className="w-5 h-5 text-nexus-electric" />
                  Daily Quests
               </h3>
            </div>
-           <div className="flex-1 space-y-4 overflow-hidden">
-             {(user.dailyQuests || []).map((quest, i) => (
-               <div key={quest.id} className={`p-4 rounded-3xl border transition-all ${quest.completed ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-white/5 border-white/5'}`}>
-                  <div className="flex justify-between items-start mb-2">
-                     <p className={`text-xs font-bold ${quest.completed ? 'text-emerald-400' : 'text-white'}`}>{quest.title}</p>
-                     {quest.completed && <Check className="w-4 h-4 text-emerald-400" />}
-                  </div>
-                  <p className="text-[10px] text-nexus-slate mb-3">{quest.description}</p>
-                  <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
-                     <div 
-                        className={`h-full transition-all duration-1000 ${quest.completed ? 'bg-emerald-500' : 'bg-nexus-electric'}`}
-                        style={{ width: `${(quest.current / quest.target) * 100}%` }}
-                     />
-                  </div>
-                  <div className="flex justify-between mt-2">
-                     <span className="text-[9px] font-bold text-nexus-slate">{quest.current}/{quest.target}</span>
-                     <span className="text-[9px] font-bold text-nexus-electric">+{quest.rewardXp} XP</span>
-                  </div>
+           <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-2">
+             {(!user.dailyQuests || user.dailyQuests.length === 0) ? (
+               <div className="flex flex-col items-center justify-center h-full opacity-30 text-zinc-500">
+                 <Target className="w-12 h-12 mb-4" />
+                 <p className="text-[10px] font-bold uppercase tracking-widest">No Active Quests</p>
+                 <p className="text-[9px] mt-2">Check Quests tab to initialize</p>
                </div>
-             ))}
+             ) : (
+               user.dailyQuests.map((quest, i) => (
+                 <div key={quest.id} className={`p-5 rounded-2xl border transition-all ${quest.completed ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-nexus-black/40 border-nexus-border'}`}>
+                   <div className="flex justify-between items-start mb-2">
+                      <p className={`text-sm font-bold ${quest.completed ? 'text-emerald-400' : 'text-white'}`}>{quest.title}</p>
+                      {quest.completed && <Check className="w-4 h-4 text-emerald-400" />}
+                   </div>
+                   <p className="text-xs text-zinc-500 mb-4">{quest.description}</p>
+                   <div className="h-1.5 w-full bg-nexus-black/60 rounded-full overflow-hidden">
+                      <div 
+                         className={`h-full transition-all duration-1000 ${quest.completed ? 'bg-emerald-500' : 'bg-nexus-electric'}`}
+                         style={{ width: `${(quest.current / quest.target) * 100}%` }}
+                      />
+                   </div>
+                   <div className="flex justify-between mt-3">
+                      <span className="text-[10px] font-bold text-zinc-500">{quest.current} / {quest.target}</span>
+                      <span className="text-[10px] font-bold text-nexus-electric">+{quest.rewardXp} XP</span>
+                   </div>
+                </div>
+               ))
+             )}
            </div>
+           <button onClick={() => onViewChange(AppView.DAILY_QUESTS)} className="mt-6 w-full py-3 bg-nexus-black/40 border border-nexus-border rounded-xl text-xs font-bold text-zinc-400 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest">
+              View All Quests
+           </button>
+        </div>
+
+        {/* Course Card Bento */}
+        <div className="md:col-span-4 row-span-1 bg-nexus-card border border-nexus-border rounded-3xl p-8 group flex flex-col justify-between relative overflow-hidden backdrop-blur-md">
+           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-nexus-violet/10 blur-[60px] rounded-full group-hover:bg-nexus-violet/20 transition-all" />
+           <div className="relative z-10">
+              <div className="flex justify-between items-start mb-6">
+                 <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-nexus-violet">Next Academic Node</span>
+                 <BookOpen className="w-5 h-5 text-zinc-500 group-hover:text-nexus-violet transition-colors" />
+              </div>
+              {nextEvent ? (
+                <>
+                  <h4 className="text-2xl font-bold text-white truncate leading-tight">{nextEvent.title}</h4>
+                  <p className="text-sm text-zinc-400 font-medium mt-2 flex items-center gap-2">
+                    <Clock className="w-4 h-4" /> {nextEvent.startTime} • {nextEvent.subject}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-zinc-500 italic">All nodes synchronized.</p>
+              )}
+           </div>
+           <button onClick={() => onViewChange(AppView.SCHEDULE)} className="mt-6 flex items-center gap-2 text-xs font-bold text-white group-hover:gap-4 transition-all uppercase tracking-[0.2em] relative z-10">
+              Access Schedule <ArrowRight className="w-4 h-4 text-nexus-electric" />
+           </button>
         </div>
 
         {/* Small Analytics Bento cards */}
-        <div className="col-span-12 md:col-span-4 row-span-1 glass-card rounded-[2.5rem] p-6 flex items-center justify-between group text-left">
-           <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-nexus-slate">Completion Index</p>
-              <p className="text-3xl font-black text-white mt-1">{stats.done}<span className="text-nexus-slate text-sm ml-1">/{stats.total}</span></p>
-           </div>
-           <div className="w-12 h-12 rounded-2xl glass flex items-center justify-center border-nexus-electric/20 group-hover:scale-110 transition-transform">
+        <div className="md:col-span-2 row-span-1 bg-nexus-card border border-nexus-border rounded-3xl p-6 flex flex-col justify-center group text-left backdrop-blur-md relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-100 transition-opacity">
               <Check className="w-6 h-6 text-nexus-electric" />
+           </div>
+           <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-2">Tasks Done</p>
+              <p className="text-4xl font-black text-white">{stats.done}<span className="text-zinc-500 text-lg ml-1">/{stats.total}</span></p>
            </div>
         </div>
 
-        <div className="col-span-12 md:col-span-4 row-span-1 glass-card rounded-[2.5rem] p-6 flex items-center justify-between group text-left">
-           <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-nexus-slate">Focus Pulse</p>
-              <p className="text-3xl font-black text-white mt-1">{focusPulse}<span className="text-nexus-slate text-sm ml-1">%</span></p>
-           </div>
-           <div className="w-12 h-12 rounded-2xl glass flex items-center justify-center border-nexus-violet/20 group-hover:scale-110 transition-transform">
+        <div className="md:col-span-2 row-span-1 bg-nexus-card border border-nexus-border rounded-3xl p-6 flex flex-col justify-center group text-left backdrop-blur-md relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-100 transition-opacity">
               <TrendingUp className="w-6 h-6 text-nexus-violet" />
+           </div>
+           <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500 mb-2">Focus Pulse</p>
+              <p className="text-4xl font-black text-white">{focusPulse}<span className="text-zinc-500 text-lg ml-1">%</span></p>
            </div>
         </div>
 

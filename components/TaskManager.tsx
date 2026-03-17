@@ -145,9 +145,9 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user, onTriggerXP, onU
   }, [tasks, historyPeriod]);
 
   return (
-    <div className="h-full flex flex-col animate-fade-in relative">
+    <div className="h-full flex flex-col animate-fade-in relative pr-2">
       {error && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-3 animate-bounce border border-rose-400/50">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-rose-600/90 backdrop-blur-md text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-3 animate-bounce border border-rose-400/50">
            <AlertCircle className="w-5 h-5" />
            <span>{error}</span>
            <button onClick={() => setError(null)}><X className="w-4 h-4" /></button>
@@ -162,33 +162,33 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user, onTriggerXP, onU
             </div>
             <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-nexus-electric hover:bg-nexus-violet text-white font-semibold rounded-xl transition-all shadow-lg active:scale-95"
+            className="flex items-center gap-2 px-6 py-3 bg-white text-black font-bold rounded-xl transition-all shadow-xl hover:bg-zinc-200 active:scale-95"
             >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 fill-black" />
             <span>Add Task</span>
             </button>
         </header>
 
         <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1 group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-nexus-electric transition-colors" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-white transition-colors" />
                 <input 
                     type="text" 
                     placeholder="Search tasks..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-zinc-900/30 border border-white/5 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-nexus-electric/50 transition-all shadow-inner"
+                    className="w-full bg-nexus-card/50 backdrop-blur-md border border-nexus-border rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-nexus-electric/50 transition-all shadow-inner"
                 />
             </div>
-            <div className="flex bg-zinc-900/30 border border-white/5 rounded-xl p-1 gap-1">
+            <div className="flex bg-nexus-card/50 backdrop-blur-md border border-nexus-border rounded-xl p-1 gap-1">
                 {['Today', 'History', 'Done'].map((f) => (
                     <button
                     key={f}
                     onClick={() => setFilter(f as any)}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all
+                    className={`px-6 py-2 rounded-lg text-sm font-bold transition-all
                         ${filter === f 
-                        ? 'bg-zinc-800 text-white shadow-sm' 
-                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
+                        ? 'bg-nexus-electric text-white shadow-md' 
+                        : 'text-zinc-500 hover:text-white hover:bg-white/5'}`}
                     >
                     {f}
                     </button>
@@ -197,44 +197,50 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user, onTriggerXP, onU
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 pb-10 pr-2">
+      <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0 pb-10">
         {filter === 'History' && (
-          <div className="space-y-4 mb-6 animate-slide-up">
+          <div className="space-y-6 mb-8 animate-slide-up">
             <div className="flex justify-center">
-                <div className="flex bg-zinc-900/40 p-1 rounded-xl border border-white/5">
+                <div className="flex bg-nexus-card/50 backdrop-blur-md p-1 rounded-xl border border-nexus-border">
                     {['Week', 'Month', 'All'].map(p => (
                         <button 
                             key={p} 
                             onClick={() => setHistoryPeriod(p as any)}
-                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${historyPeriod === p ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${historyPeriod === p ? 'bg-white text-black shadow-md' : 'text-zinc-500 hover:text-white'}`}
                         >
                             {p}
                         </button>
                     ))}
                 </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl text-center group">
-                   <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-3 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                      <Check className="w-5 h-5 text-emerald-400" />
+            <div className="grid grid-cols-2 gap-6">
+                <div className="p-8 bg-nexus-card/50 backdrop-blur-md border border-nexus-border rounded-3xl text-center group relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Check className="w-12 h-12 text-emerald-400" />
                    </div>
-                   <p className="text-2xl font-black text-white">{historyStats.completed}</p>
-                   <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Finished</p>
+                   <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-4 border border-emerald-500/20 group-hover:scale-110 transition-transform relative z-10">
+                      <Check className="w-6 h-6 text-emerald-400" />
+                   </div>
+                   <p className="text-4xl font-black text-white relative z-10">{historyStats.completed}</p>
+                   <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-2 relative z-10">Finished</p>
                 </div>
-                <div className="p-6 bg-zinc-900/40 border border-white/5 rounded-3xl text-center group">
-                   <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center mx-auto mb-3 border border-rose-500/20 group-hover:scale-110 transition-transform">
-                      <X className="w-5 h-5 text-rose-400" />
+                <div className="p-8 bg-nexus-card/50 backdrop-blur-md border border-nexus-border rounded-3xl text-center group relative overflow-hidden">
+                   <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <X className="w-12 h-12 text-rose-400" />
                    </div>
-                   <p className="text-2xl font-black text-white">{historyStats.missed}</p>
-                   <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mt-1">Not Done</p>
+                   <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center mx-auto mb-4 border border-rose-500/20 group-hover:scale-110 transition-transform relative z-10">
+                      <X className="w-6 h-6 text-rose-400" />
+                   </div>
+                   <p className="text-4xl font-black text-white relative z-10">{historyStats.missed}</p>
+                   <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mt-2 relative z-10">Not Done</p>
                 </div>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-3 relative min-h-[200px]">
+        <div className="grid grid-cols-1 gap-4 relative min-h-[200px]">
             {isLoading && (
-                <div className="absolute inset-0 flex items-start justify-center pt-20 bg-black/50 z-10 backdrop-blur-sm rounded-xl">
+                <div className="absolute inset-0 flex items-start justify-center pt-20 bg-nexus-black/50 z-10 backdrop-blur-sm rounded-xl">
                     <Loader2 className="w-8 h-8 animate-spin text-nexus-electric" />
                 </div>
             )}
@@ -243,10 +249,10 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user, onTriggerXP, onU
             <div 
                 key={task.id}
                 className={`
-                group flex items-center gap-5 p-5 rounded-2xl border transition-all duration-300 animate-fade-in
+                group flex items-center gap-5 p-6 rounded-3xl border transition-all duration-300 animate-fade-in backdrop-blur-md
                 ${task.status === TaskStatus.DONE 
-                    ? 'bg-zinc-900/10 border-white/5 opacity-50' 
-                    : 'bg-zinc-900/30 border-white/5 hover:border-nexus-electric/30 hover:bg-zinc-900/50'}
+                    ? 'bg-nexus-card/30 border-nexus-border opacity-50' 
+                    : 'bg-nexus-card/60 border-nexus-border hover:border-nexus-electric/30 hover:bg-nexus-card'}
                 `}
             >
                 <button 
@@ -264,7 +270,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user, onTriggerXP, onU
                 <div className="flex-1 min-w-0">
                     <h3 className={`font-medium text-base text-white truncate transition-all ${task.status === TaskStatus.DONE ? 'line-through text-zinc-500' : ''}`}>{task.title}</h3>
                     <div className="flex items-center gap-4 text-xs text-zinc-500 mt-1">
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/5 uppercase font-bold tracking-widest text-[9px]">
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-nexus-border uppercase font-bold tracking-widest text-[9px]">
                             {task.subject}
                         </span>
                         {filter !== 'Today' && (
@@ -288,7 +294,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user, onTriggerXP, onU
             </div>
             ))}
             {!isLoading && filteredTasks.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-24 text-zinc-600 border border-dashed border-white/5 rounded-[2rem] bg-zinc-900/10">
+            <div className="flex flex-col items-center justify-center py-24 text-zinc-600 border border-dashed border-nexus-border rounded-[2rem] bg-nexus-card/10">
                 {filter === 'Today' ? (
                   <>
                     <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-4"><Check className="w-6 h-6 text-zinc-700" /></div>
@@ -306,23 +312,23 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user, onTriggerXP, onU
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-md bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-nexus-black/80 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-md bg-[#09090b] border border-nexus-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-nexus-electric to-nexus-violet" />
             <h2 className="text-2xl font-bold text-white mb-6">New Task</h2>
             <form onSubmit={addTask} className="space-y-5">
               <div>
                 <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Name</label>
-                <input name="title" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Study Physics" />
+                <input name="title" required className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Study Physics" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Subject</label>
-                  <input name="subject" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Physics" />
+                  <input name="subject" required className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" placeholder="e.g. Physics" />
                 </div>
                 <div>
                    <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Priority</label>
-                   <select name="priority" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none cursor-pointer">
+                   <select name="priority" className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none cursor-pointer">
                      <option value={TaskPriority.MEDIUM}>Medium</option>
                      <option value={TaskPriority.HIGH}>High</option>
                      <option value={TaskPriority.LOW}>Low</option>
@@ -333,12 +339,12 @@ export const TaskManager: React.FC<TaskManagerProps> = ({ user, onTriggerXP, onU
               <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Due Date</label>
-                    <input name="dueDate" type="datetime-local" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all [color-scheme:dark]" />
+                    <input name="dueDate" type="datetime-local" className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all [color-scheme:dark]" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Reminder</label>
                     <div className="relative">
-                        <select name="reminderOffset" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none cursor-pointer">
+                        <select name="reminderOffset" className="w-full bg-nexus-card border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all appearance-none cursor-pointer">
                             {REMINDER_OPTIONS.map(opt => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}

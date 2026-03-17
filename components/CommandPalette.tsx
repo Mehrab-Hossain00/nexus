@@ -38,8 +38,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onClose, onNavig
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 animate-fade-in">
       <div className="absolute inset-0 bg-nexus-black/70 backdrop-blur-md" onClick={onClose} />
       
-      <div className="w-full max-w-xl bg-nexus-card border border-white/10 rounded-3xl shadow-2xl relative z-10 overflow-hidden ring-1 ring-white/5 animate-slide-up">
-        <div className="relative border-b border-white/5">
+      <div className="w-full max-w-xl bg-nexus-card border border-nexus-border rounded-3xl shadow-2xl relative z-10 overflow-hidden ring-1 ring-white/5 animate-slide-up">
+        <div className="relative border-b border-nexus-border">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-nexus-slate" />
           <input 
             autoFocus
@@ -63,7 +63,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onClose, onNavig
                  className="w-full flex items-center justify-between p-4 rounded-2xl text-left hover:bg-nexus-electric/10 group transition-all border border-transparent hover:border-nexus-electric/20"
                >
                  <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-xl bg-nexus-black border border-white/5 flex items-center justify-center group-hover:bg-nexus-electric group-hover:text-white transition-all shadow-inner">
+                    <div className="w-12 h-12 rounded-xl bg-nexus-black border border-nexus-border flex items-center justify-center group-hover:bg-nexus-electric group-hover:text-white transition-all shadow-inner">
                        <cmd.icon className="w-6 h-6" />
                     </div>
                     <div>
@@ -85,10 +85,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onClose, onNavig
            </div>
         </div>
 
-        <div className="p-5 bg-nexus-black/80 border-t border-white/5 flex items-center justify-between">
+        <div className="p-5 bg-nexus-black/80 border-t border-nexus-border flex items-center justify-between">
            <div className="flex gap-6">
               <div className="flex items-center gap-2">
-                 <kbd className="text-[10px] font-black text-white bg-white/10 px-2 py-1 rounded-lg border border-white/10">ESC</kbd>
+                 <kbd className="text-[10px] font-black text-white bg-white/10 px-2 py-1 rounded-lg border border-nexus-border">ESC</kbd>
                  <span className="text-[9px] font-black text-nexus-slate uppercase tracking-widest">Close</span>
               </div>
            </div>

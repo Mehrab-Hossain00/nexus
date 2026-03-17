@@ -38,11 +38,11 @@ export const TaskManagerManualEntry = ({ user, onAdd }: { user: UserProfile, onA
     };
 
     return (
-        <form onSubmit={handleAdd} className="space-y-4 p-6 bg-zinc-900/30 rounded-2xl border border-white/5 backdrop-blur-sm">
+        <form onSubmit={handleAdd} className="space-y-4 p-6 bg-nexus-card rounded-2xl border border-nexus-border backdrop-blur-sm">
             <h3 className="text-sm font-bold text-white uppercase tracking-widest">Add History</h3>
             <div className="grid grid-cols-2 gap-4">
-                <input name="subject" placeholder="Subject" className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-nexus-electric/50 transition-colors" required />
-                <input name="duration" type="number" placeholder="Minutes" className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-nexus-electric/50 transition-colors" required />
+                <input name="subject" placeholder="Subject" className="bg-nexus-black/40 border border-nexus-border rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-nexus-electric/50 transition-colors" required />
+                <input name="duration" type="number" placeholder="Minutes" className="bg-nexus-black/40 border border-nexus-border rounded-xl px-4 py-2 text-sm text-white outline-none focus:border-nexus-electric/50 transition-colors" required />
             </div>
             <button type="submit" className="w-full py-2 bg-white text-black font-bold rounded-xl text-xs active:scale-95 transition-transform hover:bg-zinc-100">Save Session</button>
         </form>
@@ -212,7 +212,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
   if (view === 'chat' && activeGroup) {
       return (
           <div className="h-full flex flex-col animate-fade-in relative">
-              <header className="flex items-center justify-between p-4 bg-zinc-900/40 border border-white/5 rounded-2xl mb-4 backdrop-blur-xl shadow-2xl relative z-10">
+              <header className="flex items-center justify-between p-4 bg-nexus-card border border-nexus-border rounded-2xl mb-4 backdrop-blur-xl shadow-2xl relative z-10">
                   <div className="flex items-center gap-4">
                       <button onClick={() => setView('list')} className="p-2 hover:bg-white/10 rounded-lg text-zinc-500 hover:text-white transition-all active:scale-90">
                           <ArrowLeft className="w-5 h-5" />
@@ -231,7 +231,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                               <button 
                                 key={m.uid} 
                                 onClick={() => handleInspectMember(m)}
-                                className="w-8 h-8 rounded-full border-2 border-black bg-zinc-800 transition-transform hover:scale-110 hover:z-20 relative focus:outline-none focus:ring-2 focus:ring-nexus-electric"
+                                className="w-8 h-8 rounded-full border-2 border-black bg-nexus-card transition-transform hover:scale-110 hover:z-20 relative focus:outline-none focus:ring-2 focus:ring-nexus-electric"
                               >
                                   <img src={m.avatar} className="w-full h-full rounded-full" title={m.name} />
                               </button>
@@ -250,7 +250,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
               </header>
 
               <div className="flex-1 flex gap-4 min-h-0">
-                  <div className="flex-1 flex flex-col bg-zinc-900/10 border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm shadow-inner relative">
+                  <div className="flex-1 flex flex-col bg-nexus-card border border-nexus-border rounded-3xl overflow-hidden backdrop-blur-sm shadow-inner relative">
                       <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                           {messages.map((m) => (
                               <div key={m.id} className={`flex flex-col ${m.senderId === user.uid ? 'items-end' : 'items-start'} group`}>
@@ -259,7 +259,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                       px-4 py-2.5 rounded-2xl max-w-[80%] text-sm backdrop-blur-md border transition-all duration-300
                                       ${m.senderId === user.uid 
                                           ? 'bg-nexus-electric/20 text-white border-nexus-electric/30 hover:border-nexus-electric/50 hover:bg-nexus-electric/30' 
-                                          : 'bg-white/5 text-zinc-200 border-white/10 hover:border-white/20 hover:bg-white/10'}
+                                          : 'bg-white/5 text-zinc-200 border-nexus-border hover:border-white/20 hover:bg-white/10'}
                                   `}>
                                       {m.text}
                                   </div>
@@ -267,12 +267,12 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                           ))}
                           <div ref={msgEndRef} />
                       </div>
-                      <form onSubmit={handleSendMessage} className="p-4 bg-zinc-900/40 backdrop-blur-xl border-t border-white/5 flex gap-2">
+                      <form onSubmit={handleSendMessage} className="p-4 bg-nexus-card backdrop-blur-xl border-t border-nexus-border flex gap-2">
                           <input 
                             value={msgInput}
                             onChange={e => setMsgInput(e.target.value)}
                             placeholder="Type a message..." 
-                            className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:border-nexus-electric/50 outline-none transition-all placeholder:text-zinc-600" 
+                            className="flex-1 bg-nexus-black/40 border border-nexus-border rounded-xl px-4 py-3 text-sm text-white focus:border-nexus-electric/50 outline-none transition-all placeholder:text-zinc-600" 
                           />
                           <button 
                             type="submit" 
@@ -281,7 +281,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                 p-3 rounded-xl transition-all active:scale-90 shadow-lg flex items-center justify-center
                                 ${msgInput.trim() 
                                     ? 'bg-nexus-electric text-white hover:bg-nexus-violet hover:shadow-[0_0_20px_rgba(var(--nexus-accent-rgb),0.4)]' 
-                                    : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}
+                                    : 'bg-nexus-card text-zinc-600 cursor-not-allowed'}
                             `}
                           >
                             <Send className="w-5 h-5" />
@@ -290,7 +290,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                   </div>
 
                   <aside className="w-72 shrink-0 flex flex-col gap-4">
-                      <div className="flex-1 bg-zinc-900/10 border border-white/5 rounded-3xl p-6 overflow-y-auto custom-scrollbar backdrop-blur-sm">
+                      <div className="flex-1 bg-nexus-card border border-nexus-border rounded-3xl p-6 overflow-y-auto custom-scrollbar backdrop-blur-sm">
                           <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-6">Who's Here</h3>
                           <div className="space-y-4">
                               {groupMembers.map(m => (
@@ -300,7 +300,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                     className="w-full flex items-start gap-3 group text-left transition-all p-2 rounded-xl hover:bg-white/5 active:scale-[0.98]"
                                   >
                                       <div className="relative shrink-0 transition-transform group-hover:scale-105">
-                                          <img src={m.avatar} className="w-10 h-10 rounded-lg bg-zinc-800 border border-white/5" />
+                                          <img src={m.avatar} className="w-10 h-10 rounded-lg bg-nexus-card border border-nexus-border" />
                                           <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-black transition-colors ${m.status === 'online' ? 'bg-emerald-500' : m.status === 'studying' ? 'bg-nexus-electric' : m.status === 'break' ? 'bg-amber-500' : 'bg-zinc-600'}`} />
                                       </div>
                                       <div className="min-w-0 flex-1">
@@ -322,12 +322,12 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
               </div>
 
               {inspectingMember && (
-                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-                      <div className={`w-full max-w-sm bg-zinc-900 border border-white/10 rounded-3xl p-8 shadow-2xl relative transition-all duration-500 ${showFullReport ? 'max-h-[80vh] overflow-y-auto custom-scrollbar' : ''}`}>
+                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-nexus-black/80 backdrop-blur-md animate-fade-in">
+                      <div className={`w-full max-w-sm bg-nexus-card border border-nexus-border rounded-3xl p-8 shadow-2xl relative transition-all duration-500 ${showFullReport ? 'max-h-[80vh] overflow-y-auto custom-scrollbar' : ''}`}>
                           <button onClick={() => setInspectingMember(null)} className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
                           
                           <div className="flex flex-col items-center text-center space-y-4 mb-8">
-                             <img src={inspectingMember.avatar} className="w-20 h-20 rounded-2xl bg-black border border-white/10 shadow-xl" />
+                             <img src={inspectingMember.avatar} className="w-20 h-20 rounded-2xl bg-nexus-black border border-nexus-border shadow-xl" />
                              <div>
                                 <h3 className="text-xl font-bold text-white">{inspectingMember.name}</h3>
                                 <div className="flex items-center justify-center gap-2">
@@ -338,7 +338,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                           </div>
 
                           <div className="grid grid-cols-2 gap-3 mb-6">
-                             <div className="p-4 bg-black/40 rounded-2xl border border-white/5 text-center flex flex-col items-center justify-center hover:bg-black/60 transition-colors">
+                             <div className="p-4 bg-nexus-black/40 rounded-2xl border border-nexus-border text-center flex flex-col items-center justify-center hover:bg-nexus-black/60 transition-colors">
                                 <p className="text-zinc-500 text-[9px] font-bold uppercase mb-1 flex items-center gap-1">
                                     <Clock className="w-2.5 h-2.5" /> Study Today
                                 </p>
@@ -348,7 +348,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                     <p className="text-lg font-bold text-white">{memberStats?.hours || "0.0"}h</p>
                                 )}
                              </div>
-                             <div className="p-4 bg-black/40 rounded-2xl border border-white/5 text-center flex flex-col items-center justify-center hover:bg-black/60 transition-colors">
+                             <div className="p-4 bg-nexus-black/40 rounded-2xl border border-nexus-border text-center flex flex-col items-center justify-center hover:bg-nexus-black/60 transition-colors">
                                 <p className="text-zinc-500 text-[9px] font-bold uppercase mb-1 flex items-center gap-1">
                                     <Target className="w-2.5 h-2.5" /> Goal Progress
                                 </p>
@@ -361,7 +361,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                           </div>
 
                           {showFullReport && memberStats && (
-                              <div className="space-y-6 animate-slide-up border-t border-white/5 pt-6 mt-6">
+                              <div className="space-y-6 animate-slide-up border-t border-nexus-border pt-6 mt-6">
                                   <div className="space-y-4">
                                       <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em] flex items-center gap-2">
                                           <TrendingUp className="w-3 h-3 text-nexus-electric" /> Subject Breakdown
@@ -373,7 +373,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                                                       <span className="text-zinc-300 font-medium">{sub.name}</span>
                                                       <span className="text-zinc-500 font-mono">{sub.mins}m</span>
                                                   </div>
-                                                  <div className="h-1 bg-black/60 rounded-full overflow-hidden">
+                                                  <div className="h-1 bg-nexus-black/60 rounded-full overflow-hidden">
                                                       <div 
                                                         className="h-full bg-nexus-electric rounded-full transition-all duration-1000" 
                                                         style={{ width: `${Math.min(100, (sub.mins / 120) * 100)}%` }} 
@@ -405,7 +405,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                           <button 
                             onClick={() => setShowFullReport(!showFullReport)}
                             className={`w-full mt-6 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-[0.98]
-                                ${showFullReport ? 'bg-zinc-800 text-zinc-300' : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'}`}
+                                ${showFullReport ? 'bg-nexus-card text-zinc-300' : 'bg-white/5 border border-nexus-border text-white hover:bg-white/10'}`}
                           >
                             {showFullReport ? (
                                 <><X className="w-3.5 h-3.5" /> Close Report</>
@@ -428,7 +428,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
           <p className="text-zinc-500 text-sm mt-1">Study and collaborate with others.</p>
         </div>
         <div className="flex gap-3">
-            <div className="flex bg-zinc-900/50 rounded-xl border border-white/5 p-1 backdrop-blur-md">
+            <div className="flex bg-nexus-card rounded-xl border border-nexus-border p-1 backdrop-blur-md">
                 <input 
                    placeholder="Invite Code" 
                    value={joinCode}
@@ -445,7 +445,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
       </header>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar space-y-10 pr-2">
-         <section className="bg-zinc-900/10 rounded-3xl p-8 border border-white/5 mb-8 backdrop-blur-sm shadow-inner">
+         <section className="bg-nexus-card rounded-3xl p-8 border border-nexus-border mb-8 backdrop-blur-sm shadow-inner">
             <TaskManagerManualEntry user={user} onAdd={loadInitial} />
          </section>
 
@@ -457,14 +457,14 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
                 {userGroups.map(g => (
                     <div 
                         key={g.id}
-                        className="p-6 rounded-3xl bg-zinc-900/10 border border-white/5 text-left group hover:border-nexus-electric/30 transition-all hover:bg-zinc-900/30 relative overflow-hidden backdrop-blur-sm"
+                        className="p-6 rounded-3xl bg-nexus-card border border-nexus-border text-left group hover:border-nexus-electric/30 transition-all hover:bg-nexus-card/80 relative overflow-hidden backdrop-blur-sm"
                     >
                         <div className="flex justify-between items-start mb-4 relative z-10">
-                            <div className="w-12 h-12 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                            <div className="w-12 h-12 rounded-2xl bg-nexus-black/40 border border-nexus-border flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                                 <Users className="w-6 h-6 text-nexus-electric" />
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-zinc-500 font-mono bg-black/20 px-2 py-0.5 rounded border border-white/5">{g.groupCode}</span>
+                                <span className="text-[10px] text-zinc-500 font-mono bg-nexus-black/20 px-2 py-0.5 rounded border border-nexus-border">{g.groupCode}</span>
                                 {g.ownerId === user.uid && (
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); setDeletingGroupId(g.id); }}
@@ -497,7 +497,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {publicGroups.map(g => (
-                    <div key={g.id} className="p-6 rounded-3xl bg-zinc-900/10 border border-white/5 flex flex-col justify-between backdrop-blur-sm group hover:border-white/20 transition-all">
+                    <div key={g.id} className="p-6 rounded-3xl bg-nexus-card border border-nexus-border flex flex-col justify-between backdrop-blur-sm group hover:border-nexus-border/80 transition-all">
                         <div>
                             <h4 className="text-lg font-bold text-white mb-2 group-hover:text-nexus-electric transition-colors">{g.name}</h4>
                             <p className="text-xs text-zinc-500 line-clamp-3 mb-6 leading-relaxed">{g.description}</p>
@@ -521,22 +521,22 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
       </div>
 
       {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-              <div className="w-full max-w-md bg-[#09090b] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-nexus-black/80 backdrop-blur-md animate-fade-in">
+              <div className="w-full max-w-md bg-nexus-card border border-nexus-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
                   <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-nexus-electric to-rose-500" />
                   <h2 className="text-2xl font-bold text-white mb-6">New Study Group</h2>
                   <form onSubmit={handleCreateGroup} className="space-y-5">
                       <div>
                           <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Group Name</label>
-                          <input name="name" required className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" />
+                          <input name="name" required className="w-full bg-nexus-black/50 border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none transition-all" />
                       </div>
                       <div>
                           <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Description</label>
-                          <textarea name="desc" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none h-24 resize-none transition-all" />
+                          <textarea name="desc" className="w-full bg-nexus-black/50 border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-nexus-electric/50 outline-none h-24 resize-none transition-all" />
                       </div>
                       <div>
                           <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Privacy</label>
-                          <select name="visibility" className="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-nexus-electric/50 transition-all appearance-none cursor-pointer">
+                          <select name="visibility" className="w-full bg-nexus-black/50 border border-nexus-border rounded-xl px-4 py-3 text-white outline-none focus:border-nexus-electric/50 transition-all appearance-none cursor-pointer">
                               <option value="private">Private (Invite Only)</option>
                               <option value="public">Public (Open to All)</option>
                           </select>
@@ -551,8 +551,8 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
       )}
 
       {deletingGroupId && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-sm bg-zinc-900 border border-rose-500/20 rounded-3xl p-8 shadow-2xl space-y-6 text-center">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-nexus-black/90 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-sm bg-nexus-card border border-rose-500/20 rounded-3xl p-8 shadow-2xl space-y-6 text-center">
             <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto border border-rose-500/20">
               <AlertTriangle className="w-8 h-8 text-rose-500" />
             </div>
@@ -565,7 +565,7 @@ export const Groups: React.FC<GroupsProps> = ({ user }) => {
             <div className="flex gap-3 pt-2">
               <button 
                 onClick={() => setDeletingGroupId(null)}
-                className="flex-1 py-3 bg-zinc-800 text-white font-bold rounded-xl active:scale-95 hover:bg-zinc-700 transition-colors"
+                className="flex-1 py-3 bg-nexus-card text-white font-bold rounded-xl active:scale-95 hover:bg-zinc-700 transition-colors"
               >
                 Cancel
               </button>

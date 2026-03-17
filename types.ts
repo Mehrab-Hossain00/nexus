@@ -9,12 +9,13 @@ export enum AppView {
   HUB = 'HUB',
   SETTINGS = 'SETTINGS',
   SHOP = 'SHOP',
-  ACHIEVEMENTS = 'ACHIEVEMENTS'
+  ACHIEVEMENTS = 'ACHIEVEMENTS',
+  DAILY_QUESTS = 'DAILY_QUESTS'
 }
 
 export type UserStatus = 'online' | 'offline' | 'studying' | 'break';
 
-export type AppTheme = 'default' | 'midnight' | 'blackout' | 'cyberpunk' | 'oceanic' | 'sunset' | 'forest' | 'crimson';
+export type AppTheme = 'default' | 'midnight' | 'blackout' | 'neon_protocol' | 'oceanic' | 'sunset' | 'forest' | 'crimson' | 'discord_dark' | 'discord_light' | 'gradient_aurora' | 'gradient_nebula' | 'hacker_terminal' | 'cherry_blossom' | 'premium_gold' | 'premium_cyber' | 'premium_ethereal' | 'premium_crimson';
 
 export enum TaskStatus {
   PENDING = 'PENDING',
@@ -43,6 +44,14 @@ export interface UserProfile {
   streak?: number;
   streakFreezeCount?: number;
   unlockedThemes?: AppTheme[];
+  unlockedGalleries?: string[];
+  unlockedBadges?: string[];
+  unlockedSoundPacks?: string[];
+  unlockedAvatarBorders?: string[];
+  unlockedProfileDecos?: string[];
+  activeBadge?: string;
+  activeAvatarBorder?: string;
+  activeProfileDeco?: string;
   badges?: string[]; // IDs of earned badges
   dailyQuests?: DailyQuest[];
   lastActiveDate?: string;
@@ -137,7 +146,7 @@ export interface ShopItem {
   name: string;
   description: string;
   price: number;
-  type: 'theme' | 'booster' | 'streak_freeze';
+  type: 'theme' | 'booster' | 'streak_freeze' | 'gallery' | 'badge' | 'sound_pack' | 'avatar_border' | 'profile_deco';
   value?: string; // theme id or multiplier value
 }
 

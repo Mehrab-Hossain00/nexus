@@ -37,7 +37,8 @@ export const authService = {
       name,
       avatar: `https://api.dicebear.com/7.x/micah/svg?seed=${name}&backgroundColor=transparent`,
       pin,
-      biometricEnabled: true 
+      biometricEnabled: true,
+      credits: name.toLowerCase() === 'test' ? 9999 : 0
     };
 
     try {

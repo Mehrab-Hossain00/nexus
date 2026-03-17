@@ -216,14 +216,14 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
   };
 
   return (
-    <div className="flex h-full rounded-3xl bg-zinc-900/10 border border-white/5 overflow-hidden animate-fade-in backdrop-blur-xl">
+    <div className="flex h-full rounded-3xl bg-nexus-card border border-nexus-border overflow-hidden animate-fade-in backdrop-blur-xl">
       <aside 
         className={`
-          bg-black/40 border-r border-white/5 transition-all duration-500 flex flex-col
+          bg-nexus-black/40 border-r border-nexus-border transition-all duration-500 flex flex-col
           ${isSidebarOpen ? 'w-72' : 'w-0 opacity-0 -translate-x-full pointer-events-none'}
         `}
       >
-        <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
+        <div className="p-4 border-b border-nexus-border flex items-center justify-between shrink-0">
           <h2 className="text-white font-bold tracking-tight flex items-center gap-2">
              <MessageSquare className="w-4 h-4 text-nexus-electric" />
              Chat History
@@ -253,7 +253,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                     autoFocus
                     value={renamingTitle}
                     onChange={e => setRenamingTitle(e.target.value)}
-                    className="bg-zinc-800 border border-nexus-electric text-xs text-white px-2 py-1 rounded w-full outline-none"
+                    className="bg-nexus-card border border-nexus-electric text-xs text-white px-2 py-1 rounded w-full outline-none"
                     onBlur={() => setRenamingSessionId(null)}
                   />
                   <button type="submit" className="text-nexus-electric hover:text-white">
@@ -293,7 +293,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
       </aside>
 
       <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden">
-        <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-black/20 backdrop-blur-md">
+        <div className="p-4 border-b border-nexus-border flex items-center justify-between shrink-0 bg-nexus-black/20 backdrop-blur-md">
            <div className="flex items-center gap-4">
               <button 
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -329,8 +329,8 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
               <div className={`
                 max-w-[85%] md:max-w-[75%] rounded-2xl p-4 md:p-6
                 ${msg.role === 'user' 
-                  ? 'bg-zinc-800/80 text-white border border-white/5 ml-12' 
-                  : msg.isError ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-nexus-electric/5 text-zinc-100 border border-white/5 mr-12'}
+                  ? 'bg-nexus-card/80 text-white border border-nexus-border ml-12' 
+                  : msg.isError ? 'bg-rose-500/10 border-rose-500/20 text-rose-200' : 'bg-nexus-electric/5 text-zinc-100 border border-nexus-border mr-12'}
               `}>
                 {msg.role === 'model' && (
                   <div className="flex items-center gap-2 mb-4">
@@ -344,7 +344,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                 )}
                 
                 {msg.imageUrl && (
-                  <img src={msg.imageUrl} alt="Uploaded" className="max-w-full rounded-xl mb-4 border border-white/10 shadow-lg" />
+                  <img src={msg.imageUrl} alt="Uploaded" className="max-w-full rounded-xl mb-4 border border-nexus-border shadow-lg" />
                 )}
                 
                 <div className="prose prose-invert prose-sm max-w-none text-zinc-200 leading-relaxed">
@@ -359,7 +359,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                             style={vscDarkPlus}
                             language={match[1]}
                             PreTag="div"
-                            className="rounded-xl border border-white/5 shadow-2xl my-4 !bg-black/50"
+                            className="rounded-xl border border-nexus-border shadow-2xl my-4 !bg-nexus-black/50"
                             {...props}
                           >
                             {String(children).replace(/\n$/, '')}
@@ -381,7 +381,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 bg-black/40 backdrop-blur-xl border-t border-white/5 shrink-0">
+        <div className="p-4 bg-nexus-black/40 backdrop-blur-xl border-t border-nexus-border shrink-0">
           <form onSubmit={handleSend} className="max-w-4xl mx-auto">
             {imageFile && (
               <div className="flex items-center gap-3 p-2 bg-nexus-electric/10 border border-nexus-electric/30 rounded-xl mb-3">
@@ -404,7 +404,7 @@ export const AITutor: React.FC<AITutorProps> = ({ user }) => {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={imageFile ? "What should I do with this image?" : "Ask a question..."}
                 disabled={isLoading}
-                className="w-full bg-zinc-900/60 border border-white/10 rounded-2xl pl-4 pr-32 py-4 text-white placeholder-zinc-500 focus:outline-none focus:border-nexus-electric/50 transition-all text-sm md:text-base"
+                className="w-full bg-nexus-black/60 border border-nexus-border rounded-2xl pl-4 pr-32 py-4 text-white placeholder-zinc-500 focus:outline-none focus:border-nexus-electric/50 transition-all text-sm md:text-base"
               />
               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <input 

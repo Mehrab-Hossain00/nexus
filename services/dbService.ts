@@ -71,10 +71,26 @@ export const dbService = {
   // --- GAMIFICATION ---
   awardRewards: async (uid: string, xp: number, credits: number) => {
     const userRef = doc(db, 'users', uid);
-    await updateDoc(userRef, {
-      xp: increment(xp),
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) return;
+    
+    const userData = userSnap.data() as UserProfile;
+    const currentXp = userData.xp || 0;
+    const currentLevel = userData.level || 1;
+    
+    const newXp = currentXp + xp;
+    const newLevel = Math.floor(newXp / 100) + 1;
+    
+    const updates: any = {
+      xp: newXp,
       credits: increment(credits)
-    });
+    };
+    
+    if (newLevel > currentLevel) {
+      updates.level = newLevel;
+    }
+    
+    await updateDoc(userRef, updates);
   },
 
   updateDailyQuests: async (uid: string, quests: DailyQuest[]) => {
@@ -95,8 +111,18 @@ export const dbService = {
 
     if (item.type === 'theme') {
       updates.unlockedThemes = arrayUnion(item.value);
+    } else if (item.type === 'gallery') {
+      updates.unlockedGalleries = arrayUnion(item.value);
     } else if (item.type === 'streak_freeze') {
       updates.streakFreezeCount = increment(1);
+    } else if (item.type === 'badge') {
+      updates.unlockedBadges = arrayUnion(item.value);
+    } else if (item.type === 'avatar_border') {
+      updates.unlockedAvatarBorders = arrayUnion(item.value);
+    } else if (item.type === 'profile_deco') {
+      updates.unlockedProfileDecos = arrayUnion(item.value);
+    } else if (item.type === 'sound_pack') {
+      updates.unlockedSoundPacks = arrayUnion(item.value);
     }
 
     await updateDoc(userRef, updates);

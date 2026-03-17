@@ -114,7 +114,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           key={num}
           onClick={() => handlePinInput(num.toString())}
           disabled={isProcessing}
-          className="w-16 h-16 rounded-full bg-zinc-800/50 hover:bg-zinc-700 text-white text-xl font-medium border border-white/5 transition-all hover:scale-105 active:scale-95 flex items-center justify-center backdrop-blur-sm disabled:opacity-50 disabled:pointer-events-none hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+          className="w-16 h-16 rounded-full bg-nexus-card/50 hover:bg-zinc-700 text-white text-xl font-medium border border-nexus-border transition-all hover:scale-105 active:scale-95 flex items-center justify-center backdrop-blur-sm disabled:opacity-50 disabled:pointer-events-none hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
         >
           {num}
         </button>
@@ -123,14 +123,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <button
         onClick={() => handlePinInput('0')}
         disabled={isProcessing}
-        className="w-16 h-16 rounded-full bg-zinc-800/50 hover:bg-zinc-700 text-white text-xl font-medium border border-white/5 transition-all hover:scale-105 active:scale-95 flex items-center justify-center backdrop-blur-sm disabled:opacity-50 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+        className="w-16 h-16 rounded-full bg-nexus-card/50 hover:bg-zinc-700 text-white text-xl font-medium border border-nexus-border transition-all hover:scale-105 active:scale-95 flex items-center justify-center backdrop-blur-sm disabled:opacity-50 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
       >
         0
       </button>
       <button
         onClick={handleBackspace}
         disabled={isProcessing}
-        className="w-16 h-16 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-all disabled:opacity-50 active:scale-90"
+        className="w-16 h-16 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-nexus-card/50 transition-all disabled:opacity-50 active:scale-90"
       >
         <Delete className="w-6 h-6" />
       </button>
@@ -156,7 +156,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   );
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-nexus-black flex items-center justify-center p-4 relative overflow-hidden font-sans">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/20 via-black to-black pointer-events-none" />
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-20" />
 
@@ -168,7 +168,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         {step === 'LANDING' && (
           <div className="animate-fade-in space-y-12 text-center">
             <div className="space-y-4">
-               <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-black border border-white/10 shadow-2xl relative overflow-hidden mb-2 group hover:border-white/20 hover:scale-105 transition-all duration-500 hover:shadow-[0_0_30px_rgba(99,102,241,0.2)]">
+               <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-nexus-black border border-nexus-border shadow-2xl relative overflow-hidden mb-2 group hover:border-white/20 hover:scale-105 transition-all duration-500 hover:shadow-[0_0_30px_rgba(99,102,241,0.2)]">
                   <div className="absolute top-0 right-0 w-8 h-8 bg-indigo-500 blur-[15px] rounded-full opacity-50 group-hover:opacity-100 transition-opacity" />
                   <Sparkles className="w-10 h-10 text-white relative z-10 group-hover:rotate-12 transition-transform duration-500" />
                </div>
@@ -181,11 +181,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <div className="space-y-4 w-full px-4">
                <button 
                   onClick={() => setStep('LOGIN_NAME')}
-                  className="w-full group relative p-5 rounded-2xl bg-gradient-to-r from-zinc-900/50 to-zinc-900/30 border border-white/10 hover:border-indigo-500/50 transition-all flex items-center justify-between backdrop-blur-md overflow-hidden hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full group relative p-5 rounded-2xl bg-gradient-to-r from-zinc-900/50 to-zinc-900/30 border border-nexus-border hover:border-indigo-500/50 transition-all flex items-center justify-between backdrop-blur-md overflow-hidden hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] hover:scale-[1.02] active:scale-[0.98]"
                >
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="flex items-center gap-4 relative z-10">
-                     <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors text-zinc-400 group-hover:shadow-[0_0_10px_rgba(99,102,241,0.5)]">
+                     <div className="w-10 h-10 rounded-full bg-nexus-card flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors text-zinc-400 group-hover:shadow-[0_0_10px_rgba(99,102,241,0.5)]">
                         <LogIn className="w-5 h-5" />
                      </div>
                      <div className="text-left">
@@ -201,7 +201,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   className="w-full group relative p-5 rounded-2xl bg-transparent border border-zinc-800 hover:border-zinc-700 hover:bg-white/5 transition-all flex items-center justify-between hover:scale-[1.02] active:scale-[0.98]"
                >
                   <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 group-hover:text-white transition-colors">
+                     <div className="w-10 h-10 rounded-full bg-nexus-card border border-zinc-800 flex items-center justify-center text-zinc-500 group-hover:text-white transition-colors">
                         <PlusCircle className="w-5 h-5" />
                      </div>
                      <div className="text-left">
@@ -219,7 +219,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         )}
 
         {step === 'LOGIN_NAME' && (
-          <div className="animate-slide-up bg-zinc-900/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+          <div className="animate-slide-up bg-nexus-card backdrop-blur-xl border border-nexus-border p-8 rounded-3xl shadow-2xl">
              <button 
                 onClick={() => setStep('LANDING')}
                 className="mb-6 text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-sm"
@@ -239,7 +239,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         autoFocus
                         value={loginName}
                         onChange={(e) => setLoginName(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all text-lg focus:shadow-[0_0_15px_rgba(99,102,241,0.1)]"
+                        className="w-full bg-nexus-black/50 border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all text-lg focus:shadow-[0_0_15px_rgba(99,102,241,0.1)]"
                         placeholder="Enter your name..."
                     />
                 </div>
@@ -280,7 +280,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         )}
 
         {step === 'REGISTER_NAME' && (
-          <div className="animate-slide-up bg-zinc-900/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+          <div className="animate-slide-up bg-nexus-card backdrop-blur-xl border border-nexus-border p-8 rounded-3xl shadow-2xl">
              <button 
                 onClick={() => setStep('LANDING')}
                 className="mb-6 text-zinc-500 hover:text-white transition-colors flex items-center gap-2 text-sm"
@@ -300,7 +300,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         autoFocus
                         value={newUserName}
                         onChange={(e) => setNewUserName(e.target.value)}
-                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all text-lg focus:shadow-[0_0_15px_rgba(99,102,241,0.1)]"
+                        className="w-full bg-nexus-black/50 border border-nexus-border rounded-xl px-4 py-3 text-white focus:border-indigo-500/50 outline-none transition-all text-lg focus:shadow-[0_0_15px_rgba(99,102,241,0.1)]"
                         placeholder="e.g. Alex"
                     />
                 </div>
@@ -328,7 +328,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
              <h2 className="text-2xl font-bold text-white mb-2">Set a Security PIN</h2>
              <p className="text-zinc-500 text-sm mb-8">Choose a 4-digit code to keep your data safe.</p>
              
-             <div className="bg-zinc-900/30 p-8 rounded-3xl border border-white/5 backdrop-blur-md">
+             <div className="bg-nexus-card p-8 rounded-3xl border border-nexus-border backdrop-blur-md">
                  <PinDisplay />
                  <Keypad />
              </div>

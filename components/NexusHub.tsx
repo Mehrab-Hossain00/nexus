@@ -113,7 +113,25 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
     const unsubUser = onSnapshot(doc(db, 'users', user.uid), async (snap) => {
       const data = snap.data() as UserProfile;
       if (data) {
-        setCurrentUserData(data);
+        // Check streak validity
+        const lastActive = data.lastActivity ? new Date(data.lastActivity) : new Date(0);
+        const now = new Date();
+        
+        // Normalize to midnight to compare dates only
+        const lastDate = new Date(lastActive.getFullYear(), lastActive.getMonth(), lastActive.getDate());
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        
+        const diffTime = Math.abs(today.getTime() - lastDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+        // If more than 1 day has passed (yesterday was the last valid day), reset streak
+        if (diffDays > 1 && (data.streak || 0) > 0) {
+           // Only update if not already 0 to prevent loops
+           await dbService.updateUserProfile(user.uid, { streak: 0 });
+        } else {
+           // Only update state if no reset happened, otherwise the next snapshot will handle it
+           setCurrentUserData(data);
+        }
       }
     });
 
@@ -146,15 +164,22 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
       return;
     }
 
+    // Fix: Ensure groupId is treated as string and query is correct
+    // Note: Firestore requires an index for 'groupId' and 'timestamp'
+    // If index is missing, it might fail silently or throw error in console.
+    // For now, let's try without orderBy to see if messages appear, then add it back.
+    // Or better, just filter by groupId and sort client-side if index is issue.
+    
     const q = query(
       collection(db, 'group_messages'),
-      where('groupId', '==', selectedGroup.id),
-      orderBy('timestamp', 'asc'),
-      limit(50)
+      where('groupId', '==', String(selectedGroup.id))
     );
 
     const unsub = onSnapshot(q, (snap) => {
-      setGroupMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as GroupMessage)));
+      const msgs = snap.docs
+        .map(d => ({ id: d.id, ...d.data() } as GroupMessage))
+        .sort((a, b) => a.timestamp - b.timestamp);
+      setGroupMessages(msgs);
     });
 
     return () => unsub();
@@ -165,14 +190,24 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
     if (!newMessage.trim() || !selectedGroup) return;
 
     const msg = {
-      groupId: selectedGroup.id,
+      groupId: String(selectedGroup.id),
       senderId: user.uid,
       senderName: user.name,
       text: newMessage.trim(),
+      timestamp: Date.now()
     };
 
     setNewMessage('');
-    await dbService.sendGroupMessage(msg);
+    // Optimistic update
+    setGroupMessages(prev => [...prev, msg as GroupMessage]);
+    
+    try {
+      await dbService.sendGroupMessage(msg);
+      // Also award XP for chatting (social engagement)
+      await dbService.awardRewards(user.uid, 5, 1); 
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
   };
 
   const handleCreateGroup = async (e: React.FormEvent) => {
@@ -224,7 +259,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
   return (
     <div className="h-full flex flex-row-reverse bg-[#050505] animate-fade-in relative overflow-hidden font-sans selection:bg-nexus-electric selection:text-white">
       {/* Vertical Navigation Rail - Moved to right */}
-      <nav className="w-20 md:w-24 shrink-0 border-l border-white/[0.05] flex flex-col items-center py-10 bg-black z-50">
+      <nav className="w-20 md:w-24 shrink-0 border-l border-nexus-border flex flex-col items-center py-10 bg-nexus-black z-50">
         <div className="mb-12">
           <div className="w-12 h-12 rounded-2xl bg-nexus-electric/10 flex items-center justify-center border border-nexus-electric/20 shadow-2xl shadow-nexus-electric/10 group cursor-pointer hover:rotate-12 transition-transform duration-500">
             <Sparkles className="w-6 h-6 text-nexus-electric" />
@@ -244,7 +279,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${activeTab === tab.id ? 'bg-white text-black shadow-2xl scale-110' : 'bg-transparent'}`}>
                   <tab.icon className="w-5 h-5" />
                </div>
-               <span className="text-[7px] font-bold uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-opacity absolute -left-12 bg-black border border-white/10 px-2 py-1 rounded-md pointer-events-none z-50 whitespace-nowrap">
+               <span className="text-[7px] font-bold uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-opacity absolute -left-12 bg-nexus-black border border-nexus-border px-2 py-1 rounded-md pointer-events-none z-50 whitespace-nowrap">
                   {tab.label}
                </span>
                {activeTab === tab.id && (
@@ -260,10 +295,128 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
         <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-nexus-electric/5 blur-[120px] rounded-full pointer-events-none" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-nexus-violet/5 blur-[100px] rounded-full pointer-events-none" />
 
-        <main className="flex-1 overflow-y-auto custom-scrollbar relative z-10 p-12 md:p-20">
-          <div className="max-w-5xl mx-auto pb-32">
+        <main className={`flex-1 overflow-y-auto custom-scrollbar relative z-10 ${selectedGroup ? 'p-6 md:p-8 overflow-hidden' : 'p-12 md:p-20'}`}>
+          <div className={`max-w-5xl mx-auto ${selectedGroup ? 'h-full flex flex-col' : 'pb-32'}`}>
             
-            {activeTab === 'leaderboard' && (
+            {selectedGroup ? (
+              <div className="h-full flex flex-col animate-fade-in">
+                <header className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-6">
+                    <button onClick={() => setSelectedGroup(null)} className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-all">
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 rounded-2xl bg-white/5 border border-nexus-border flex items-center justify-center text-2xl font-bold text-white shadow-2xl">
+                        {selectedGroup.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-bold text-white tracking-tight">{selectedGroup.name}</h2>
+                        <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">
+                          CODE: {selectedGroup.groupCode} • {selectedGroup.members.length} Members
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex p-1 bg-white/[0.02] border border-white/[0.05] rounded-2xl">
+                    <button 
+                      onClick={() => setGroupModalTab('info')}
+                      className={`px-8 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${groupModalTab === 'info' ? 'bg-white text-black shadow-xl' : 'text-zinc-500 hover:text-white'}`}
+                    >
+                      Info
+                    </button>
+                    <button 
+                      onClick={() => setGroupModalTab('chat')}
+                      className={`px-8 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${groupModalTab === 'chat' ? 'bg-white text-black shadow-xl' : 'text-zinc-500 hover:text-white'}`}
+                    >
+                      Chat
+                    </button>
+                  </div>
+                </header>
+
+                <div className="flex-1 bg-nexus-card border border-nexus-border rounded-[2.5rem] p-8 overflow-hidden relative flex flex-col">
+                  {groupModalTab === 'info' ? (
+                    <div className="h-full overflow-y-auto custom-scrollbar space-y-8">
+                      <div className="p-8 bg-white/[0.02] border border-white/[0.03] rounded-[2rem]">
+                        <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] mb-4">Description</h4>
+                        <p className="text-sm text-zinc-400 leading-relaxed">{selectedGroup.description || 'No description provided.'}</p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] ml-2">Members</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {(selectedGroup.members as unknown as UserProfile[]).map(member => (
+                            <div 
+                              key={member.uid} 
+                              onClick={() => {
+                                // Keep selectedGroup but show user profile
+                                handleViewUser(member);
+                              }}
+                              className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.05] rounded-2xl hover:bg-white/[0.05] transition-all cursor-pointer group"
+                            >
+                              <div className="flex items-center gap-4">
+                                <img src={member.avatar} className="w-10 h-10 rounded-xl object-cover" alt={member.name} />
+                                <div>
+                                  <p className="text-sm font-bold text-white">{member.name}</p>
+                                  <p className="text-[8px] text-zinc-600 font-bold uppercase tracking-widest">Level {member.level || 1}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Flame className="w-3 h-3 text-orange-500" />
+                                <span className="text-xs font-bold text-white">{member.streak || 0}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-full flex flex-col">
+                      <div className="flex-1 space-y-4 mb-4 overflow-y-auto custom-scrollbar pr-2">
+                        {groupMessages.map((msg) => {
+                          const isMe = msg.senderId === user.uid;
+                          return (
+                            <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">{msg.senderName}</span>
+                                <span className="text-[8px] text-zinc-800 font-mono">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
+                              <div className={`px-6 py-3 rounded-2xl text-sm max-w-[80%] ${isMe ? 'bg-nexus-electric text-white rounded-tr-none' : 'bg-white/5 text-zinc-300 rounded-tl-none border border-nexus-border'}`}>
+                                {msg.text}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {groupMessages.length === 0 && (
+                          <div className="flex flex-col items-center justify-center h-full opacity-20">
+                            <MessageSquare className="w-16 h-16 mb-6" />
+                            <p className="text-xs font-bold uppercase tracking-[0.3em]">No messages yet</p>
+                            <p className="text-[10px] text-zinc-500 mt-2">Be the first to say hello!</p>
+                          </div>
+                        )}
+                        <div ref={chatEndRef} />
+                      </div>
+                      <form onSubmit={handleSendMessage} className="relative mt-4">
+                        <input 
+                          value={newMessage}
+                          onChange={e => setNewMessage(e.target.value)}
+                          placeholder="Type a message..."
+                          className="w-full bg-white/[0.02] border border-white/[0.05] rounded-2xl px-6 py-5 text-white focus:border-nexus-electric/30 outline-none transition-all placeholder:text-zinc-800"
+                        />
+                        <button 
+                          type="submit"
+                          disabled={!newMessage.trim()}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-nexus-electric text-white rounded-xl hover:bg-nexus-violet transition-all disabled:opacity-20 shadow-lg"
+                        >
+                          <Send className="w-4 h-4" />
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {!selectedGroup && activeTab === 'leaderboard' && (
               <div className="space-y-24 animate-fade-in pb-32">
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                    <div>
@@ -296,7 +449,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                       <div 
                         key={u.uid} 
                         onClick={() => handleViewUser(u)} 
-                        className={`group relative flex items-center justify-between p-8 rounded-[2rem] border transition-all duration-700 cursor-pointer overflow-hidden ${isMe ? 'bg-white text-black border-white shadow-2xl scale-[1.02]' : 'bg-zinc-900/10 border-white/[0.03] hover:bg-zinc-900/20 hover:border-white/[0.08]'}`}
+                        className={`group relative flex items-center justify-between p-8 rounded-[2rem] border transition-all duration-700 cursor-pointer overflow-hidden ${isMe ? 'bg-white text-black border-white shadow-2xl scale-[1.02]' : 'bg-nexus-card border-nexus-border hover:bg-nexus-card/80 hover:border-nexus-border/80'}`}
                       >
                         {isMe && <div className="absolute top-0 right-0 w-32 h-32 bg-nexus-electric/10 blur-[40px] rounded-full pointer-events-none" />}
                         
@@ -306,13 +459,13 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                           </div>
                           
                           <div className="flex items-center gap-6">
-                            <div className={`w-16 h-16 rounded-2xl p-0.5 border transition-all duration-700 ${isMe ? 'border-black/10' : 'border-white/10'}`}>
+                            <div className={`w-16 h-16 rounded-2xl p-0.5 border transition-all duration-700 ${isMe ? 'border-black/10' : 'border-nexus-border'}`}>
                                <img src={u.avatar} className="w-full h-full rounded-[0.85rem] object-cover" alt={u.name} />
                             </div>
                             <div>
                               <h4 className={`text-xl font-bold tracking-tight ${isMe ? 'text-black' : 'text-white'}`}>
                                 {u.name} 
-                                {isMe && <span className="text-[9px] font-bold uppercase tracking-widest ml-3 px-2 py-0.5 bg-black text-white rounded-md">YOU</span>}
+                                {isMe && <span className="text-[9px] font-bold uppercase tracking-widest ml-3 px-2 py-0.5 bg-nexus-black text-white rounded-md">YOU</span>}
                               </h4>
                               <p className={`text-[9px] font-bold uppercase tracking-[0.3em] mt-2 ${isMe ? 'text-black/60' : 'text-zinc-600'}`}>
                                 Level {u.level || 1} • <span className="font-mono">{u.xp || 0} XP</span>
@@ -334,7 +487,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                 </div>
               </div>
             )}
-            {activeTab === 'groups' && (
+            {!selectedGroup && activeTab === 'groups' && (
               <div className="space-y-24 pb-32 animate-fade-in">
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                    <div>
@@ -360,7 +513,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                          <input 
                            value={groupCode} 
                            onChange={e => setGroupCode(e.target.value)} 
-                           className="w-full bg-zinc-900/10 border border-white/[0.05] rounded-[2rem] px-10 py-8 text-white text-2xl font-bold tracking-tight focus:border-nexus-electric/30 outline-none transition-all placeholder:text-zinc-900 shadow-2xl" 
+                           className="w-full bg-nexus-card border border-nexus-border rounded-[2rem] px-10 py-8 text-white text-2xl font-bold tracking-tight focus:border-nexus-electric/30 outline-none transition-all placeholder:text-zinc-900 shadow-2xl" 
                            placeholder="Enter 6-digit code..." 
                          />
                          <button 
@@ -387,10 +540,10 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                                 const members = allUsers.filter(u => g.members.includes(u.uid));
                                 setSelectedGroup({ ...g, members: members as any });
                               }}
-                              className="p-8 bg-zinc-900/10 border border-white/[0.03] rounded-[2rem] flex items-center justify-between hover:bg-zinc-900/20 transition-all duration-700 group relative overflow-hidden cursor-pointer"
+                              className="p-8 bg-nexus-card border border-nexus-border rounded-[2rem] flex items-center justify-between hover:bg-nexus-card/80 transition-all duration-700 group relative overflow-hidden cursor-pointer"
                             >
                                <div className="flex items-center gap-6">
-                                 <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl font-bold text-white">
+                                 <div className="w-16 h-16 rounded-2xl bg-white/5 border border-nexus-border flex items-center justify-center text-2xl font-bold text-white">
                                     {g.name.charAt(0)}
                                  </div>
                                  <div className="text-left">
@@ -422,10 +575,10 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                    </div>
                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       {publicGroups.filter(g => !g.members.includes(user.uid)).map(g => (
-                         <div key={g.id} className="p-10 bg-zinc-900/10 border border-white/[0.05] rounded-[2.5rem] flex flex-col justify-between hover:bg-zinc-900/20 transition-all duration-700 shadow-2xl relative overflow-hidden group">
+                         <div key={g.id} className="p-10 bg-nexus-card border border-nexus-border rounded-[2.5rem] flex flex-col justify-between hover:bg-nexus-card/80 transition-all duration-700 shadow-2xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-nexus-electric/5 blur-[40px] rounded-full pointer-events-none" />
                             <div className="relative z-10 mb-8">
-                               <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl font-bold text-white mb-6">
+                               <div className="w-16 h-16 rounded-2xl bg-white/5 border border-nexus-border flex items-center justify-center text-2xl font-bold text-white mb-6">
                                   {g.name.charAt(0)}
                                </div>
                                <h4 className="text-xl font-bold text-white tracking-tight mb-2">{g.name}</h4>
@@ -446,8 +599,8 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                 </section>
 
                 {showCreateGroup && (
-                   <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-black/90 backdrop-blur-2xl animate-fade-in">
-                      <div className="w-full max-w-lg bg-zinc-950 border border-white/[0.05] rounded-[3rem] p-12 shadow-2xl relative overflow-hidden animate-slide-up">
+                   <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-nexus-black/90 backdrop-blur-2xl animate-fade-in">
+                      <div className="w-full max-w-lg bg-nexus-black border border-nexus-border rounded-[3rem] p-12 shadow-2xl relative overflow-hidden animate-slide-up">
                          <div className="absolute top-0 right-0 w-64 h-64 bg-nexus-electric/5 blur-[80px] rounded-full pointer-events-none" />
                          <div className="flex justify-between items-center mb-10 relative z-10">
                             <h3 className="text-xl font-bold text-white uppercase tracking-[0.2em]">New Collective</h3>
@@ -487,13 +640,22 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
       </div>
 
       {selectedUser && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
-          <div className="w-full max-w-2xl bg-zinc-950 border border-white/[0.05] rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-nexus-black/80 backdrop-blur-xl animate-fade-in">
+          <div className={`w-full max-w-2xl border rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden animate-slide-up max-h-[90vh] flex flex-col ${
+            selectedUser.activeProfileDeco === 'cyberpunk' ? 'bg-nexus-black border-cyan-500/50 shadow-[0_0_50px_rgba(6,182,212,0.15)] bg-[url("https://www.transparenttextures.com/patterns/cubes.png")]' :
+            selectedUser.activeProfileDeco === 'ethereal' ? 'bg-gradient-to-br from-indigo-950 to-zinc-950 border-indigo-500/30 shadow-[0_0_50px_rgba(99,102,241,0.15)]' :
+            selectedUser.activeProfileDeco === 'crimson' ? 'bg-gradient-to-br from-red-950 to-black border-red-500/30 shadow-[0_0_50px_rgba(239,68,68,0.15)]' :
+            'bg-nexus-black border-nexus-border'
+          }`}>
             <button onClick={() => setSelectedUser(null)} className="absolute top-8 right-8 p-2.5 text-zinc-600 hover:text-white bg-white/[0.03] rounded-xl transition-all z-10"><X className="w-5 h-5" /></button>
             
             <div className="flex items-center gap-8 mb-10">
               <div className="relative">
-                <div className="w-28 h-28 rounded-[2rem] border border-white/10 p-1 bg-gradient-to-br from-white/10 to-transparent">
+                <div className={`w-28 h-28 rounded-[2rem] border p-1 ${
+                  selectedUser.activeAvatarBorder === 'neon' ? 'border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)] bg-cyan-500/10' :
+                  selectedUser.activeAvatarBorder === 'gold' ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)] bg-yellow-500/10' :
+                  'border-nexus-border bg-gradient-to-br from-white/10 to-transparent'
+                }`}>
                    <img src={selectedUser.avatar} className="w-full h-full rounded-[1.75rem] object-cover shadow-2xl" alt={selectedUser.name} />
                 </div>
                 <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-black ${selectedUser.status === 'online' ? 'bg-emerald-500' : selectedUser.status === 'studying' ? 'bg-nexus-electric' : 'bg-zinc-700'}`} />
@@ -508,6 +670,18 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                     <Flame className="w-3 h-3 text-orange-500" />
                     <span className="text-[10px] font-bold text-white uppercase tracking-widest">{selectedUser.streak || 0} Day Streak</span>
                   </div>
+                  {selectedUser.activeBadge === 'scholar' && (
+                    <div className="px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center gap-2">
+                      <Shield className="w-3 h-3 text-blue-400" />
+                      <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Scholar</span>
+                    </div>
+                  )}
+                  {selectedUser.activeBadge === 'elite' && (
+                    <div className="px-4 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex items-center gap-2">
+                      <Shield className="w-3 h-3 text-yellow-400" />
+                      <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest">Elite</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -516,7 +690,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
               <div className="grid grid-cols-2 gap-6">
                 <div className="p-8 bg-white/[0.02] border border-white/[0.03] rounded-[2rem] space-y-4 group hover:bg-white/[0.04] transition-all duration-500">
                   <div className="flex items-center gap-3 text-zinc-600 group-hover:text-nexus-electric transition-colors">
-                    <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center border border-white/5">
+                    <div className="w-8 h-8 rounded-xl bg-nexus-black flex items-center justify-center border border-nexus-border">
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <span className="text-[9px] font-black uppercase tracking-[0.2em]">Tasks</span>
@@ -525,7 +699,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                 </div>
                 <div className="p-8 bg-white/[0.02] border border-white/[0.03] rounded-[2rem] space-y-4 group hover:bg-white/[0.04] transition-all duration-500">
                   <div className="flex items-center gap-3 text-zinc-600 group-hover:text-nexus-violet transition-colors">
-                    <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center border border-white/5">
+                    <div className="w-8 h-8 rounded-xl bg-nexus-black flex items-center justify-center border border-nexus-border">
                       <Activity className="w-4 h-4" />
                     </div>
                     <span className="text-[9px] font-black uppercase tracking-[0.2em]">Sessions</span>
@@ -535,13 +709,13 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="p-8 rounded-[2rem] bg-zinc-900/10 border border-white/[0.03] backdrop-blur-xl flex flex-col shadow-2xl">
+                <div className="p-8 rounded-[2rem] bg-nexus-card border border-nexus-border backdrop-blur-xl flex flex-col shadow-2xl">
                     <div className="flex justify-between items-center mb-8">
                         <h3 className="text-[10px] font-black text-zinc-500 flex items-center gap-3 uppercase tracking-[0.3em]">
                             <CalendarIcon className="w-4 h-4 text-nexus-electric" />
                             History
                         </h3>
-                        <div className="flex items-center gap-3 bg-black/40 p-1 rounded-xl border border-white/[0.05]">
+                        <div className="flex items-center gap-3 bg-nexus-black/40 p-1 rounded-xl border border-nexus-border">
                             <button onClick={() => {
                                 const d = new Date(selectedUserCalendarDate);
                                 d.setMonth(d.getMonth() - 1);
@@ -569,7 +743,7 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                                     onClick={() => setSelectedUserSelectedDay(d.date)}
                                     className={`
                                         aspect-square rounded-xl border flex flex-col items-center justify-center gap-1 transition-all duration-500 relative group
-                                        ${selectedUserSelectedDay === d.date ? 'bg-nexus-electric border-nexus-electric shadow-2xl shadow-nexus-electric/20 scale-105' : 'bg-black/20 border-white/[0.03] hover:border-white/[0.1] hover:bg-black/40'}
+                                        ${selectedUserSelectedDay === d.date ? 'bg-nexus-electric border-nexus-electric shadow-2xl shadow-nexus-electric/20 scale-105' : 'bg-nexus-black/20 border-white/[0.03] hover:border-white/[0.1] hover:bg-nexus-black/40'}
                                     `}
                                 >
                                     <span className={`text-[10px] font-bold ${selectedUserSelectedDay === d.date ? 'text-white' : 'text-zinc-600 group-hover:text-zinc-400'}`}>{d.day}</span>
@@ -586,13 +760,13 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                     </div>
                 </div>
 
-                <div className="p-8 rounded-[2rem] bg-zinc-900/10 border border-white/[0.03] backdrop-blur-xl flex flex-col relative overflow-hidden group shadow-2xl">
+                <div className="p-8 rounded-[2rem] bg-nexus-card border border-nexus-border backdrop-blur-xl flex flex-col relative overflow-hidden group shadow-2xl">
                     <div className="flex justify-between items-start mb-8">
                         <div>
                             <h4 className="text-[8px] font-black text-zinc-600 uppercase tracking-[0.3em] mb-2">Intelligence</h4>
                             <h3 className="text-sm font-bold text-white tracking-tight uppercase tracking-widest">{selectedUserAnalysisData?.title}</h3>
                         </div>
-                        <div className="w-10 h-10 rounded-xl bg-black border border-white/[0.05] flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-nexus-black border border-white/[0.05] flex items-center justify-center">
                             <Layers className="w-5 h-5 text-nexus-electric" />
                         </div>
                     </div>
@@ -604,14 +778,14 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
                                     <div key={sub.name} className="space-y-2.5 animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
                                         <div className="flex justify-between items-end">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-6 h-6 rounded-lg bg-black flex items-center justify-center border border-white/[0.05]">
+                                                <div className="w-6 h-6 rounded-lg bg-nexus-black flex items-center justify-center border border-white/[0.05]">
                                                     <Zap className="w-3 h-3 text-nexus-violet" />
                                                 </div>
                                                 <span className="text-[10px] font-bold text-white uppercase tracking-widest">{sub.name}</span>
                                             </div>
                                             <span className="text-[9px] font-mono text-zinc-500 uppercase">{formatDuration(sub.duration)}</span>
                                         </div>
-                                        <div className="h-1 bg-black/60 rounded-full overflow-hidden">
+                                        <div className="h-1 bg-nexus-black/60 rounded-full overflow-hidden">
                                             <div 
                                                 className="h-full bg-nexus-electric rounded-full transition-all duration-1000" 
                                                 style={{ width: `${Math.min(100, (sub.duration / (selectedUserAnalysisData.totalSeconds/60)) * 100)}%` }} 
@@ -656,128 +830,6 @@ export const NexusHub: React.FC<NexusHubProps> = ({ user, globalRankings = [] })
         </div>
       )}
 
-      {selectedGroup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
-          <div className="w-full max-w-2xl bg-zinc-950 border border-white/[0.05] rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
-            <button onClick={() => setSelectedGroup(null)} className="absolute top-8 right-8 p-2.5 text-zinc-600 hover:text-white bg-white/[0.03] rounded-xl transition-all z-10"><X className="w-5 h-5" /></button>
-            
-            <div className="flex items-center gap-8 mb-10">
-              <div className="w-24 h-24 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center text-4xl font-bold text-white shadow-2xl">
-                {selectedGroup.name.charAt(0)}
-              </div>
-              <div className="flex-1">
-                <h2 className="text-3xl font-bold text-white tracking-tight">{selectedGroup.name}</h2>
-                <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">
-                  CODE: {selectedGroup.groupCode} • {selectedGroup.members.length} Members
-                </p>
-              </div>
-              <div className="flex p-1 bg-white/[0.02] border border-white/[0.05] rounded-2xl">
-                <button 
-                  onClick={() => setGroupModalTab('info')}
-                  className={`px-6 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all ${groupModalTab === 'info' ? 'bg-white text-black shadow-xl' : 'text-zinc-500 hover:text-white'}`}
-                >
-                  Info
-                </button>
-                <button 
-                  onClick={() => setGroupModalTab('chat')}
-                  className={`px-6 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all ${groupModalTab === 'chat' ? 'bg-white text-black shadow-xl' : 'text-zinc-500 hover:text-white'}`}
-                >
-                  Chat
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-8">
-              {groupModalTab === 'info' ? (
-                <>
-                  <div className="p-8 bg-white/[0.02] border border-white/[0.03] rounded-[2rem]">
-                    <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] mb-4">Description</h4>
-                    <p className="text-sm text-zinc-400 leading-relaxed">{selectedGroup.description || 'No description provided.'}</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] ml-2">Members</h4>
-                    <div className="grid grid-cols-1 gap-3">
-                      {(selectedGroup.members as unknown as UserProfile[]).map(member => (
-                        <div 
-                          key={member.uid} 
-                          onClick={() => {
-                            setSelectedGroup(null);
-                            handleViewUser(member);
-                          }}
-                          className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.05] rounded-2xl hover:bg-white/[0.05] transition-all cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-4">
-                            <img src={member.avatar} className="w-10 h-10 rounded-xl object-cover" alt={member.name} />
-                            <div>
-                              <p className="text-sm font-bold text-white">{member.name}</p>
-                              <p className="text-[8px] text-zinc-600 font-bold uppercase tracking-widest">Level {member.level || 1}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Flame className="w-3 h-3 text-orange-500" />
-                            <span className="text-xs font-bold text-white">{member.streak || 0}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="h-full flex flex-col">
-                  <div className="flex-1 space-y-4 mb-4 overflow-y-auto custom-scrollbar pr-2 min-h-[300px]">
-                    {groupMessages.map((msg) => {
-                      const isMe = msg.senderId === user.uid;
-                      return (
-                        <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">{msg.senderName}</span>
-                            <span className="text-[8px] text-zinc-800 font-mono">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          </div>
-                          <div className={`px-4 py-2 rounded-2xl text-sm ${isMe ? 'bg-nexus-electric text-white rounded-tr-none' : 'bg-white/5 text-zinc-300 rounded-tl-none border border-white/5'}`}>
-                            {msg.text}
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {groupMessages.length === 0 && (
-                      <div className="flex flex-col items-center justify-center h-full opacity-20 py-20">
-                        <MessageSquare className="w-12 h-12 mb-4" />
-                        <p className="text-[10px] font-bold uppercase tracking-[0.3em]">No messages yet</p>
-                      </div>
-                    )}
-                    <div ref={chatEndRef} />
-                  </div>
-                  <form onSubmit={handleSendMessage} className="relative">
-                    <input 
-                      value={newMessage}
-                      onChange={e => setNewMessage(e.target.value)}
-                      placeholder="Type a message..."
-                      className="w-full bg-white/[0.02] border border-white/[0.05] rounded-2xl px-6 py-4 text-white focus:border-nexus-electric/30 outline-none transition-all placeholder:text-zinc-800"
-                    />
-                    <button 
-                      type="submit"
-                      disabled={!newMessage.trim()}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-nexus-electric text-white rounded-xl hover:bg-nexus-violet transition-all disabled:opacity-20"
-                    >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </form>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-8 pt-8 border-t border-white/[0.03]">
-              <button 
-                onClick={() => setSelectedGroup(null)}
-                className="w-full py-4 bg-white/[0.02] border border-white/[0.05] text-zinc-400 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-white/[0.05] hover:text-white transition-all"
-              >
-                Close Collective
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

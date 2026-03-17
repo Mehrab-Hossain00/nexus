@@ -57,56 +57,226 @@
         --nexus-bg: #000000;
         --nexus-accent: #7C3AED;
         --nexus-accent-alt: #8B5CF6;
+        --nexus-accent-rgb: 124, 58, 237;
         --nexus-card: #0A0A0A;
         --nexus-border: rgba(255, 255, 255, 0.08);
       }
 
       [data-theme='midnight'] {
-        --nexus-accent: #3b82f6;
-        --nexus-accent-alt: #60a5fa;
-        --nexus-card: #050810;
+        --nexus-accent: #2563EB;
+        --nexus-accent-alt: #3B82F6;
+        --nexus-accent-rgb: 37, 99, 235;
       }
 
       [data-theme='blackout'] {
-        --nexus-accent: #ffffff;
-        --nexus-accent-alt: #e2e8f0;
-        --nexus-card: #080808;
-        --nexus-border: rgba(255, 255, 255, 0.15);
+        --nexus-accent: #FFFFFF;
+        --nexus-accent-alt: #E5E7EB;
+        --nexus-accent-rgb: 255, 255, 255;
       }
 
-      [data-theme='cyberpunk'] {
-        --nexus-accent: #d946ef;
-        --nexus-accent-alt: #f472b6;
-        --nexus-card: #0a050d;
-        --nexus-border: rgba(217, 70, 239, 0.15);
+      [data-theme='neon_protocol'] {
+        --nexus-accent: #D946EF;
+        --nexus-accent-alt: #E879F9;
+        --nexus-accent-rgb: 217, 70, 239;
       }
 
       [data-theme='oceanic'] {
-        --nexus-accent: #06b6d4;
-        --nexus-accent-alt: #22d3ee;
-        --nexus-card: #020a0c;
-        --nexus-border: rgba(6, 182, 212, 0.15);
+        --nexus-accent: #06B6D4;
+        --nexus-accent-alt: #22D3EE;
+        --nexus-accent-rgb: 6, 182, 212;
       }
 
       [data-theme='sunset'] {
-        --nexus-accent: #f59e0b;
-        --nexus-accent-alt: #fbbf24;
-        --nexus-card: #0a0802;
-        --nexus-border: rgba(245, 158, 11, 0.15);
+        --nexus-accent: #F59E0B;
+        --nexus-accent-alt: #FBBF24;
+        --nexus-accent-rgb: 245, 158, 11;
       }
 
       [data-theme='forest'] {
-        --nexus-accent: #10b981;
-        --nexus-accent-alt: #34d399;
-        --nexus-card: #020c08;
-        --nexus-border: rgba(16, 185, 129, 0.15);
+        --nexus-accent: #10B981;
+        --nexus-accent-alt: #34D399;
+        --nexus-accent-rgb: 16, 185, 129;
       }
 
       [data-theme='crimson'] {
-        --nexus-accent: #ef4444;
-        --nexus-accent-alt: #f87171;
-        --nexus-card: #0c0202;
-        --nexus-border: rgba(239, 68, 68, 0.15);
+        --nexus-accent: #EF4444;
+        --nexus-accent-alt: #F87171;
+        --nexus-accent-rgb: 239, 68, 68;
+      }
+
+      [data-theme='discord_dark'] {
+        --nexus-bg: #36393f;
+        --nexus-card: #2f3136;
+        --nexus-accent: #5865F2;
+        --nexus-accent-alt: #7289da;
+        --nexus-accent-rgb: 88, 101, 242;
+        --nexus-border: #202225;
+      }
+
+      [data-theme='discord_light'] {
+        --nexus-bg: #ffffff;
+        --nexus-card: #f2f3f5;
+        --nexus-accent: #5865F2;
+        --nexus-accent-alt: #7289da;
+        --nexus-accent-rgb: 88, 101, 242;
+        --nexus-border: #e3e5e8;
+      }
+      [data-theme='discord_light'] body {
+        color: #2e3338;
+      }
+      [data-theme='discord_light'] .text-white, 
+      [data-theme='discord_light'] .text-zinc-100,
+      [data-theme='discord_light'] .text-zinc-200,
+      [data-theme='discord_light'] .text-zinc-300 {
+        color: #060607 !important;
+      }
+      [data-theme='discord_light'] .text-zinc-400,
+      [data-theme='discord_light'] .text-zinc-500 {
+        color: #4f5660 !important;
+      }
+      [data-theme='discord_light'] .bg-nexus-black,
+      [data-theme='discord_light'] .bg-zinc-900,
+      [data-theme='discord_light'] .bg-zinc-950 {
+        background-color: #ffffff !important;
+      }
+      [data-theme='discord_light'] .bg-zinc-800,
+      [data-theme='discord_light'] .bg-zinc-900\/50 {
+        background-color: #ebedef !important;
+      }
+      [data-theme='discord_light'] .border-white\/5,
+      [data-theme='discord_light'] .border-white\/10 {
+        border-color: #e3e5e8 !important;
+      }
+
+      [data-theme='gradient_aurora'] {
+        --nexus-bg: #0f2027;
+        --nexus-card: rgba(0, 0, 0, 0.4);
+        --nexus-accent: #00f2fe;
+        --nexus-accent-alt: #4facfe;
+        --nexus-accent-rgb: 0, 242, 254;
+        --nexus-border: rgba(0, 242, 254, 0.2);
+      }
+      body[data-theme='gradient_aurora'] {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        background-attachment: fixed;
+      }
+
+      [data-theme='gradient_nebula'] {
+        --nexus-bg: #2a0845;
+        --nexus-card: rgba(0, 0, 0, 0.3);
+        --nexus-accent: #ff0099;
+        --nexus-accent-alt: #493240;
+        --nexus-accent-rgb: 255, 0, 153;
+        --nexus-border: rgba(255, 0, 153, 0.2);
+      }
+      body[data-theme='gradient_nebula'] {
+        background: linear-gradient(135deg, #2a0845, #6441A5);
+        background-attachment: fixed;
+      }
+
+      [data-theme='hacker_terminal'] {
+        --nexus-bg: #000000;
+        --nexus-card: #0a0a0a;
+        --nexus-accent: #00ff00;
+        --nexus-accent-alt: #33ff33;
+        --nexus-accent-rgb: 0, 255, 0;
+        --nexus-border: #003300;
+      }
+      [data-theme='hacker_terminal'] * {
+        font-family: 'JetBrains Mono', monospace !important;
+      }
+
+      [data-theme='cherry_blossom'] {
+        --nexus-bg: #2a1b2e;
+        --nexus-card: #3d2645;
+        --nexus-accent: #ffb7b2;
+        --nexus-accent-alt: #ffdac1;
+        --nexus-accent-rgb: 255, 183, 178;
+        --nexus-border: #5c3a69;
+      }
+      body[data-theme='cherry_blossom'] {
+        background: radial-gradient(circle at top right, #3d2645, #2a1b2e);
+        background-attachment: fixed;
+      }
+
+      [data-theme='premium_gold'] {
+        --nexus-bg: #1a1a1a;
+        --nexus-card: #262626;
+        --nexus-accent: #FFD700;
+        --nexus-accent-alt: #FBBF24;
+        --nexus-accent-rgb: 255, 215, 0;
+        --nexus-border: #404040;
+      }
+      body[data-theme='premium_gold'] {
+        background: radial-gradient(circle at top center, #262626, #1a1a1a);
+        background-attachment: fixed;
+      }
+
+      [data-theme='premium_cyber'] {
+        --nexus-bg: #050505;
+        --nexus-card: #121212;
+        --nexus-accent: #fcee0a;
+        --nexus-accent-alt: #00ffff;
+        --nexus-accent-rgb: 252, 238, 10;
+        --nexus-border: #00ffff;
+      }
+      body[data-theme='premium_cyber'] {
+        background: linear-gradient(135deg, #050505 0%, #001111 100%);
+        background-attachment: fixed;
+      }
+      [data-theme='premium_cyber'] .bg-nexus-card {
+        box-shadow: 4px 4px 0px rgba(0, 255, 255, 0.2);
+        border-radius: 8px;
+      }
+
+      [data-theme='premium_ethereal'] {
+        --nexus-bg: #e6f2ff;
+        --nexus-card: #f0f7ff;
+        --nexus-accent: #4da6ff;
+        --nexus-accent-alt: #80bfff;
+        --nexus-accent-rgb: 77, 166, 255;
+        --nexus-border: #cce0ff;
+      }
+      body[data-theme='premium_ethereal'] {
+        background: radial-gradient(circle at top left, #f0f7ff, #e6f2ff);
+        background-attachment: fixed;
+        color: #1a2b3c;
+      }
+      [data-theme='premium_ethereal'] .text-white, 
+      [data-theme='premium_ethereal'] .text-zinc-100,
+      [data-theme='premium_ethereal'] .text-zinc-200,
+      [data-theme='premium_ethereal'] .text-zinc-300 {
+        color: #0f172a !important;
+      }
+      [data-theme='premium_ethereal'] .text-zinc-400,
+      [data-theme='premium_ethereal'] .text-zinc-500 {
+        color: #64748b !important;
+      }
+      [data-theme='premium_ethereal'] .bg-nexus-black,
+      [data-theme='premium_ethereal'] .bg-zinc-900,
+      [data-theme='premium_ethereal'] .bg-zinc-950 {
+        background-color: #ffffff !important;
+      }
+      [data-theme='premium_ethereal'] .bg-zinc-800,
+      [data-theme='premium_ethereal'] .bg-zinc-900\/50 {
+        background-color: #f1f5f9 !important;
+      }
+      [data-theme='premium_ethereal'] .border-white\/5,
+      [data-theme='premium_ethereal'] .border-white\/10 {
+        border-color: #e2e8f0 !important;
+      }
+
+      [data-theme='premium_crimson'] {
+        --nexus-bg: #000000;
+        --nexus-card: #1a0000;
+        --nexus-accent: #DC143C;
+        --nexus-accent-alt: #990000;
+        --nexus-accent-rgb: 220, 20, 60;
+        --nexus-border: #4d0000;
+      }
+      body[data-theme='premium_crimson'] {
+        background: radial-gradient(circle at center, #1a0000, #000000);
+        background-attachment: fixed;
       }
 
       body {
