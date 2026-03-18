@@ -118,7 +118,8 @@ export const dbService = {
     if (!userSnap.exists()) return;
     const userData = userSnap.data() as UserProfile;
 
-    if ((userData.credits || 0) < item.price) throw new Error("Insufficient credits");
+    // Allow negative credits or purchasing without enough credits
+    // if ((userData.credits || 0) < item.price) throw new Error("Insufficient credits");
 
     const updates: any = {
       credits: increment(-item.price)

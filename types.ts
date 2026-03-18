@@ -28,6 +28,12 @@ export enum TaskPriority {
   HIGH = 'HIGH'
 }
 
+export interface GalleryImage {
+  id: string;
+  url: string;
+  createdAt: number;
+}
+
 export interface UserProfile {
   uid: string;
   name: string;

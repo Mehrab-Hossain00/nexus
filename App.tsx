@@ -216,39 +216,40 @@ const App: React.FC = () => {
   };
 
   const generateDailyQuests = (level: number): DailyQuest[] => {
-    const scale = Math.max(1, Math.floor(level / 5)); // Increase difficulty every 5 levels
+    const rewardScale = Math.max(1, Math.floor(level / 5)); 
+    const diffScale = Math.max(1, Math.floor(level / 10)); // Slower difficulty scaling
     
     return [
       { 
         id: crypto.randomUUID(), 
         title: 'Deep Focus', 
-        description: `Study for ${30 * scale} minutes`, 
-        target: 30 * scale, 
+        description: `Study for ${30 * diffScale} minutes`, 
+        target: 30 * diffScale, 
         current: 0, 
-        rewardXp: 100 * scale, 
-        rewardCredits: 50 * scale, 
+        rewardXp: 100 * rewardScale, 
+        rewardCredits: 50 * rewardScale, 
         completed: false, 
         type: 'study_time' 
       },
       { 
         id: crypto.randomUUID(), 
         title: 'Task Master', 
-        description: `Complete ${2 + scale} tasks`, 
-        target: 2 + scale, 
+        description: `Complete ${2 + diffScale} tasks`, 
+        target: 2 + diffScale, 
         current: 0, 
-        rewardXp: 150 * scale, 
-        rewardCredits: 75 * scale, 
+        rewardXp: 150 * rewardScale, 
+        rewardCredits: 75 * rewardScale, 
         completed: false, 
         type: 'tasks_done' 
       },
       { 
         id: crypto.randomUUID(), 
         title: 'Pomodoro Streak', 
-        description: `Complete ${2 + scale} Pomodoros`, 
-        target: 2 + scale, 
+        description: `Complete ${2 + diffScale} Pomodoros`, 
+        target: 2 + diffScale, 
         current: 0, 
-        rewardXp: 200 * scale, 
-        rewardCredits: 100 * scale, 
+        rewardXp: 200 * rewardScale, 
+        rewardCredits: 100 * rewardScale, 
         completed: false, 
         type: 'pomodoro_count' 
       },
@@ -1092,7 +1093,7 @@ const App: React.FC = () => {
   return (
     <div className={`flex h-screen overflow-hidden bg-nexus-black text-zinc-100 font-sans transition-all duration-1000`}>
       <div className={`fixed inset-0 bg-gradient-to-tr from-nexus-electric/10 via-nexus-black to-nexus-black pointer-events-none opacity-60 z-0 transition-colors duration-1000`} />
-      {isGothMommyGalleryOpen && <GothMommyGallery onClose={() => setIsGothMommyGalleryOpen(false)} />}
+      {isGothMommyGalleryOpen && <GothMommyGallery user={user} onClose={() => setIsGothMommyGalleryOpen(false)} />}
       {isCommandPaletteOpen && (
         <CommandPalette 
           onClose={() => setIsCommandPaletteOpen(false)} 

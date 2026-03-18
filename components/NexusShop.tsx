@@ -71,7 +71,6 @@ export const NexusShop: React.FC<NexusShopProps> = ({ user, onPurchase, onViewGa
   ];
 
   const handleBuy = async (item: ShopItem) => {
-    if ((user.credits || 0) < item.price) return;
     setIsPurchasing(item.id);
     try {
       await dbService.purchaseItem(user.uid, item);
