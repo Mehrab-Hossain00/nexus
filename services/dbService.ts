@@ -34,6 +34,21 @@ export const dbService = {
     await updateDoc(doc(db, 'users', uid), sanitize(data));
   },
 
+  resetAllUsersXP: async (currentUid?: string) => {
+    try {
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const promises = usersSnap.docs.map(d => 
+        updateDoc(doc(db, 'users', d.id), { xp: 0, level: 1 })
+      );
+      await Promise.all(promises);
+    } catch (err) {
+      console.error("Failed to reset all users, falling back to current user:", err);
+      if (currentUid) {
+        await updateDoc(doc(db, 'users', currentUid), { xp: 0, level: 1 });
+      }
+    }
+  },
+
   sendGroupMessage: async (msg: Partial<GroupMessage>) => {
     await addDoc(collection(db, 'group_messages'), sanitize({
       ...msg,

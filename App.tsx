@@ -171,6 +171,19 @@ const App: React.FC = () => {
     }
   }, [user?.name, user?.credits, user?.uid]);
 
+  useEffect(() => {
+    const resetXP = async () => {
+      if (!user) return;
+      const hasReset = localStorage.getItem('nexus_xp_reset_done');
+      if (!hasReset) {
+        await dbService.resetAllUsersXP(user.uid);
+        localStorage.setItem('nexus_xp_reset_done', 'true');
+        setUser(prev => prev ? { ...prev, xp: 0, level: 1 } : null);
+      }
+    };
+    resetXP();
+  }, [user]);
+
   // --- DAILY QUESTS LOGIC ---
   const DAILY_TASK_IDEAS = [
     "Review yesterday's notes",
@@ -329,10 +342,9 @@ const App: React.FC = () => {
     const updates: Partial<UserProfile> = { xp: newXP };
     
     if (newLevel > currentLevel) {
-      const rewards = { xp: newLevel * 100, credits: newLevel * 50 };
+      const rewards = { xp: 0, credits: newLevel * 50 };
       setLevelUp({ level: newLevel, rewards });
       updates.level = newLevel;
-      updates.xp = newXP + rewards.xp;
       updates.credits = (user.credits || 0) + rewards.credits;
     }
 

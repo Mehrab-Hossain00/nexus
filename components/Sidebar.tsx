@@ -63,6 +63,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentView, onChangeVie
         { view: AppView.TUTOR, icon: BrainCircuit, label: 'AI Tutor' },
         { view: AppView.ANALYTICS, icon: BarChart2, label: 'Analytics' },
       ]
+    },
+    {
+      title: 'System',
+      items: [
+        { view: AppView.SETTINGS, icon: Settings, label: 'Settings' },
+      ]
     }
   ];
 
